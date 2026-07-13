@@ -1,0 +1,33 @@
+# IDE
+.idea/
+.vscode/
+
+# Build outputs
+target/
+build/
+dist/
+out/
+
+# Java / Maven
+.mvn/timing.properties
+*.class
+
+# Node
+node_modules/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# private
+Workflot GitHub.docx

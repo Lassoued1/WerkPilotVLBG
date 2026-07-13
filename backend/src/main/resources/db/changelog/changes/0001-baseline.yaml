@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-01-enable-pgcrypto
+      author: codex
+      comment: Enable PostgreSQL UUID generation support for future reviewed migrations.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: DROP EXTENSION IF EXISTS pgcrypto
+
+  - changeSet:
+      id: 0001-02-baseline-conventions
+      author: codex
+      comment: >
+        Baseline marker for Liquibase-owned schema, UUID primary keys,
+        explicit foreign keys, UTC timestamps, and append-only audit tables in
+        later reviewed migrations.
+      changes:
+        - tagDatabase:
+            tag: wp-s0-03-baseline

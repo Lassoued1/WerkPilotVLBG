@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0003-01-audit-events
+      author: codex
+      comment: Store user administration audit events for WP-S1-02.
+      changes:
+        - createTable:
+            tableName: audit_event
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(80)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_audit_event_actor_user
+                    references: app_user(id)
+              - column:
+                  name: target_user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_audit_event_target_user
+                    references: app_user(id)
+              - column:
+                  name: occurred_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: details
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: audit_event
+            indexName: ix_audit_event_event_type
+            columns:
+              - column:
+                  name: event_type
+        - createIndex:
+            tableName: audit_event
+            indexName: ix_audit_event_target_user_id
+            columns:
+              - column:
+                  name: target_user_id
+      rollback:
+        - dropTable:
+            tableName: audit_event

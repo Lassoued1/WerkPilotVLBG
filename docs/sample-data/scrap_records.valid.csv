@@ -1,0 +1,3 @@
+period_start,period_end,machine_code,product_code,shift_code,scrap_count,scrap_category_code
+2026-06-30T22:00:00+02:00,2026-06-30T23:00:00+02:00,M-04,P-03,NIGHT,10,DIMENSIONAL_DEFECT
+2026-07-01T22:00:00+02:00,2026-07-01T23:00:00+02:00,M-04,P-03,NIGHT,22,DIMENSIONAL_DEFECT

@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0006-01-system-settings
+      author: codex
+      comment: Create global system settings for WP-S1-05.
+      changes:
+        - createTable:
+            tableName: system_settings
+            columns:
+              - column:
+                  name: id
+                  type: smallint
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: energy_threshold_delegation_enabled
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_by_user_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_system_settings_updated_by
+                    references: app_user(id)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: alter table system_settings add constraint ck_system_settings_singleton check (id = 1)
+        - insert:
+            tableName: system_settings
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: energy_threshold_delegation_enabled
+                  valueBoolean: false
+      rollback:
+        - dropTable:
+            tableName: system_settings

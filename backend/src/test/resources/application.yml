@@ -1,0 +1,36 @@
+﻿spring:
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+management:
+  health:
+    mail:
+      enabled: false
+
+werkpilot:
+  security:
+    access-token-secret: change-this-development-access-token-secret
+    access-token-ttl: PT15M
+    refresh-token-ttl: PT12H
+    refresh-cookie-name: werkpilot_refresh
+    csrf-header-name: X-WerkPilot-CSRF
+    allowed-origin: http://localhost:8081
+  seed:
+    enabled: false
+  identity:
+    app-base-url: http://localhost:8081
+    password-reset-token-ttl: PT1H
+    mail-from: werkpilot@localhost
+    demo-admin:
+      enabled: true
+      email: admin@werkpilot.local
+      password: WerkPilot-Admin-Change-Me-2026

@@ -1,0 +1,3 @@
+period_start,period_end,machine_code,shift_code,downtime_min,reason_code,comment
+2026-07-01T09:00:00+02:00,2026-07-01T10:00:00+02:00,M-04,MORNING,15,TOOL_CHANGE,Planned tool change
+2026-07-01T14:00:00+02:00,2026-07-01T15:00:00+02:00,M-07,AFTERNOON,35,MATERIAL_WAIT,Material arrived late

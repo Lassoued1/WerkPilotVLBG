@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: werkpilot-backend
+  datasource:
+    url: ${WERKPILOT_DATASOURCE_URL:jdbc:postgresql://localhost:5432/werkpilot}
+    username: ${WERKPILOT_DATASOURCE_USERNAME:werkpilot}
+    password: ${WERKPILOT_DATASOURCE_PASSWORD:werkpilot}
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  mail:
+    host: ${WERKPILOT_SMTP_HOST:localhost}
+    port: ${WERKPILOT_SMTP_PORT:1025}
+    username: ${WERKPILOT_SMTP_USERNAME:}
+    password: ${WERKPILOT_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${WERKPILOT_SMTP_AUTH:false}
+          starttls:
+            enable: ${WERKPILOT_SMTP_STARTTLS:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+werkpilot:
+  seed:
+    enabled: ${WERKPILOT_SEED_ENABLED:false}
+  security:
+    access-token-secret: ${WERKPILOT_ACCESS_TOKEN_SECRET:change-this-development-access-token-secret}
+    access-token-ttl: PT15M
+    refresh-token-ttl: PT12H
+    refresh-cookie-name: werkpilot_refresh
+    csrf-header-name: X-WerkPilot-CSRF
+    allowed-origin: ${WERKPILOT_ALLOWED_ORIGIN:http://localhost:8081}
+  identity:
+    app-base-url: ${APP_BASE_URL:http://localhost:8081}
+    password-reset-token-ttl: PT1H
+    mail-from: ${WERKPILOT_MAIL_FROM:werkpilot@localhost}
+    demo-admin:
+      enabled: ${WERKPILOT_DEMO_ADMIN_ENABLED:true}
+      email: ${WERKPILOT_DEMO_ADMIN_EMAIL:admin@werkpilot.local}
+      password: ${WERKPILOT_DEMO_ADMIN_PASSWORD:WerkPilot-Admin-Change-Me-2026}

@@ -1,0 +1,146 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-01-identity-users
+      author: codex
+      comment: Create identity users for WP-S1-01 authentication.
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_app_user_email
+              - column:
+                  name: display_name
+                  type: varchar(160)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: varchar(120)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: app_user_role
+            columns:
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_app_user_role_user
+                    references: app_user(id)
+                    deleteCascade: true
+              - column:
+                  name: role
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: app_user_role
+            columnNames: user_id, role
+            constraintName: pk_app_user_role
+      rollback:
+        - dropTable:
+            tableName: app_user_role
+        - dropTable:
+            tableName: app_user
+
+  - changeSet:
+      id: 0002-02-refresh-sessions
+      author: codex
+      comment: Store hashed refresh token identifiers for rotation and revocation.
+      changes:
+        - createTable:
+            tableName: refresh_session
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_refresh_session_user
+                    references: app_user(id)
+                    deleteCascade: true
+              - column:
+                  name: token_hash
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uq_refresh_session_token_hash
+              - column:
+                  name: csrf_token_hash
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issued_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked_at
+                  type: timestamptz
+              - column:
+                  name: replaced_by_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_refresh_session_replaced_by
+                    references: refresh_session(id)
+        - createIndex:
+            tableName: refresh_session
+            indexName: ix_refresh_session_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: refresh_session
+            indexName: ix_refresh_session_expires_at
+            columns:
+              - column:
+                  name: expires_at
+      rollback:
+        - dropTable:
+            tableName: refresh_session
