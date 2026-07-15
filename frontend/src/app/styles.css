@@ -304,3 +304,113 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab-button,
+.secondary-button {
+  min-height: 38px;
+  border: 1px solid #b8c2cf;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #243044;
+  background: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab-button:hover,
+.secondary-button:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.tab-active {
+  border-color: #2563eb;
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.info-panel,
+.permission-banner {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  padding: 12px 14px;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.form-panel h2,
+.panel h2 {
+  margin: 0;
+}
+
+.form-help,
+.section-heading p {
+  margin: 4px 0 0;
+  color: #526174;
+  line-height: 1.45;
+}
+
+.two-column-grid,
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.resource-grid {
+  align-items: start;
+}
+
+.resource-card {
+  display: grid;
+  gap: 16px;
+}
+
+.inline-form {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-field input,
+.compact-field select {
+  min-height: 38px;
+}
+
+.checkbox-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #243044;
+  font-weight: 700;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+}
+
+.compact-table th,
+.compact-table td {
+  padding: 8px 10px;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 980px) {
+  .two-column-grid,
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+}

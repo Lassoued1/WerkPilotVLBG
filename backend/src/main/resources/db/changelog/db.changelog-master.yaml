@@ -13,3 +13,11 @@ databaseChangeLog:
       file: db/changelog/changes/0006-system-settings.yaml
   - include:
       file: db/changelog/changes/0007-audit-query.yaml
+  - include:
+      file: db/changelog/changes/0008-import-jobs.yaml
+  - include:
+      file: db/changelog/changes/0009-production-records.yaml
+  - include:
+      file: db/changelog/changes/0010-energy-measurements.yaml
+  - include:
+      file: db/changelog/changes/0011-downtime-scrap-records.yaml

@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from "react";
+﻿import { lazy, Suspense, type ReactNode } from "react";
 import { createBrowserRouter, createMemoryRouter } from "react-router";
 
 import { AppLayout } from "./layout/AppLayout";
@@ -11,6 +11,21 @@ const DashboardPage = lazy(async () => {
 const ImportsPage = lazy(async () => {
   const module = await import("./pages/ImportsPage");
   return { default: module.ImportsPage };
+});
+
+const AuthPage = lazy(async () => {
+  const module = await import("../features/auth/AuthPage");
+  return { default: module.AuthPage };
+});
+
+const AdminPage = lazy(async () => {
+  const module = await import("../features/admin/AdminPage");
+  return { default: module.AdminPage };
+});
+
+const MasterDataPage = lazy(async () => {
+  const module = await import("../features/masterdata/MasterDataPage");
+  return { default: module.MasterDataPage };
 });
 
 const PlaceholderPage = lazy(async () => {
@@ -42,16 +57,9 @@ export const routes = [
     element: <AppLayout />,
     children: [
       { index: true, element: pageElement(<DashboardPage />) },
+      { path: "login", element: pageElement(<AuthPage />) },
       { path: "imports", element: pageElement(<ImportsPage />) },
-      {
-        path: "master-data",
-        element: pageElement(
-          <PlaceholderPage
-            bodyKey="placeholders.masterData"
-            titleKey="nav.masterData"
-          />,
-        ),
-      },
+      { path: "master-data", element: pageElement(<MasterDataPage />) },
       {
         path: "maintenance",
         element: pageElement(
@@ -70,15 +78,7 @@ export const routes = [
           />,
         ),
       },
-      {
-        path: "administration",
-        element: pageElement(
-          <PlaceholderPage
-            bodyKey="placeholders.administration"
-            titleKey="nav.administration"
-          />,
-        ),
-      },
+      { path: "administration", element: pageElement(<AdminPage />) },
       { path: "*", element: pageElement(<NotFoundPage />) },
     ],
   },

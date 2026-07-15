@@ -79,11 +79,11 @@ approval.
 
 | Task | Status | Depends on | Source | Deliverable | Focused proof before B/F |
 | --- | --- | --- | --- | --- | --- |
-| WP-S2-01 Import job/error schema and async lifecycle | Planned | S1-04, S0-05 | §§16, 24.6; OQ-009 | `PROCESSING/COMMITTED/FAILED/SUPERSEDED`, hash, limits, safe filename, 500-error cap, polling contract. | `.\mvnw.cmd "-Dtest=AsyncImportJobIT" verify` |
-| WP-S2-02 Shared strict CSV parser/validator | Planned | S2-01 | VAL-01..04; TEST-02; §§16.1, 17.4 | UTF-8/comma/dot/headers, UTC, master-data resolution, German row details, bounded processing. | `.\mvnw.cmd "-Dtest=CsvTemplateValidationTest" test` |
-| WP-S2-03 Production import | Planned | S2-02 | PRD-01; ACC-03, ACC-04 | Exact template, atomic commit/reject and traceability. | `.\mvnw.cmd "-Dtest=ProductionCsvImportIT" verify` |
-| WP-S2-04 Energy import and granularity constraints | Planned | S2-02 | ENE-01; §15.3; EC-01; OQ-005 | Exact template, machine/line XOR, one granularity per line/overlap, precision and atomicity. | `.\mvnw.cmd "-Dtest=EnergyCsvImportIT,EnergyGranularityValidationIT" verify` |
-| WP-S2-05 Downtime and scrap imports | Planned | S2-02 | DTS-01, DTS-04; ACC-03, ACC-04 | Exact templates, duration/reason/category validation and atomic commits. | `.\mvnw.cmd "-Dtest=DowntimeCsvImportIT,ScrapCsvImportIT" verify` |
+| WP-S2-01 Import job/error schema and async lifecycle | Done | S1-04, S0-05 | §§16, 24.6; OQ-009 | `PROCESSING/COMMITTED/FAILED/SUPERSEDED`, hash, limits, safe filename, 500-error cap, polling contract. | `.\mvnw.cmd "-Dtest=AsyncImportJobIT" verify` |
+| WP-S2-02 Shared strict CSV parser/validator | Done | S2-01 | VAL-01..04; TEST-02; §§16.1, 17.4 | UTF-8/comma/dot/headers, UTC, master-data resolution, German row details, bounded processing. | `.\mvnw.cmd "-Dtest=CsvTemplateValidationTest" test` |
+| WP-S2-03 Production import | Done | S2-02 | PRD-01; ACC-03, ACC-04 | Exact template, atomic commit/reject and traceability. | `.\mvnw.cmd "-Dtest=ProductionCsvImportIT" verify` |
+| WP-S2-04 Energy import and granularity constraints | Done | S2-02 | ENE-01; §15.3; EC-01; OQ-005 | Exact template, machine/line XOR, one granularity per line/overlap, precision and atomicity. | `.\mvnw.cmd "-Dtest=EnergyCsvImportIT,EnergyGranularityValidationIT" verify` |
+| WP-S2-05 Downtime and scrap imports | Done | S2-02 | DTS-01, DTS-04; ACC-03, ACC-04 | Exact templates, duration/reason/category validation and atomic commits. | `.\mvnw.cmd "-Dtest=DowntimeCsvImportIT,ScrapCsvImportIT" verify` |
 | WP-S2-06 Correction and rollback | Planned | S2-03..05 | §§16.6, 24.3; OQ-006 | COMMITTED-only target, atomic replacement, lineage, rollback reason, active-row filtering, audit and analytics hook. | `.\mvnw.cmd "-Dtest=CorrectionImportIT,ImportRollbackIT" verify` |
 | WP-S2-07 Import UI and history | Planned | S0-06, S2-01..06 | S-03; §§24.6, 25; ACC-03, ACC-04 | Role-aware uploads, React Query polling, history, German details, correction/rollback ADMIN actions. | `npm test -- --run src/features/imports` |
 | WP-S2-08 Fixtures and 100k benchmark | Planned | S2-03..06 | §34; NFR-03; TEST-02 | Four valid/invalid fixture families, expected counts and recorded benchmark. | `.\mvnw.cmd "-Dtest=LargeCsvImportBenchmarkIT" verify` |

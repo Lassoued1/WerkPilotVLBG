@@ -1,0 +1,110 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0010-01-energy-measurements
+      author: codex
+      comment: Create energy measurements for WP-S2-04 CSV imports.
+      changes:
+        - createTable:
+            tableName: energy_measurement
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_energy_measurement
+                    nullable: false
+              - column:
+                  name: import_job_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: period_start
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: period_end
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: factory_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: line_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: machine_id
+                  type: uuid
+              - column:
+                  name: shift_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: energy_kwh
+                  type: decimal(12,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: energy_measurement
+            baseColumnNames: import_job_id
+            constraintName: fk_energy_measurement_import_job
+            referencedTableName: import_job
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: energy_measurement
+            baseColumnNames: factory_id
+            constraintName: fk_energy_measurement_factory
+            referencedTableName: factory
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: energy_measurement
+            baseColumnNames: line_id
+            constraintName: fk_energy_measurement_line
+            referencedTableName: production_line
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: energy_measurement
+            baseColumnNames: machine_id
+            constraintName: fk_energy_measurement_machine
+            referencedTableName: machine
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: energy_measurement
+            baseColumnNames: shift_id
+            constraintName: fk_energy_measurement_shift
+            referencedTableName: shift
+            referencedColumnNames: id
+        - sql:
+            sql: alter table energy_measurement add constraint ck_energy_measurement_period_order check (period_end > period_start)
+        - sql:
+            sql: alter table energy_measurement add constraint ck_energy_measurement_energy_non_negative check (energy_kwh >= 0)
+        - createIndex:
+            tableName: energy_measurement
+            indexName: ix_energy_measurement_import_job_id
+            columns:
+              - column:
+                  name: import_job_id
+        - createIndex:
+            tableName: energy_measurement
+            indexName: ix_energy_measurement_line_period
+            columns:
+              - column:
+                  name: line_id
+              - column:
+                  name: period_start
+              - column:
+                  name: period_end

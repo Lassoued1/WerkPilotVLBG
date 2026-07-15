@@ -1,10 +1,11 @@
-import { NavLink, Outlet } from "react-router";
+﻿import { NavLink, Outlet } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { apiBaseUrl } from "../../shared/api/client";
 
 const navigationItems = [
   { to: "/", labelKey: "nav.dashboard" },
+  { to: "/login", labelKey: "nav.login" },
   { to: "/imports", labelKey: "nav.imports" },
   { to: "/master-data", labelKey: "nav.masterData" },
   { to: "/maintenance", labelKey: "nav.maintenance" },

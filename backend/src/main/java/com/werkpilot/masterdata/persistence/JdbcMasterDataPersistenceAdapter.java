@@ -63,6 +63,10 @@ class JdbcMasterDataPersistenceAdapter implements MasterDataPort {
     }
 
     @Override
+    public List<MasterDataRecord> findMachinesByCode(String code) {
+        return jdbcTemplate.query(select(MasterDataKind.MACHINE) + " where code = ?", this::mapRecord, code);
+    }
+    @Override
     public MasterDataRecord createFactory(String code, String name) {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(

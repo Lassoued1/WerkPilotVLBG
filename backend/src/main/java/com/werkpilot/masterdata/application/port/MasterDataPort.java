@@ -22,6 +22,8 @@ public interface MasterDataPort {
 
     List<MasterDataRecord> findMachinesByFactoryAndCode(UUID factoryId, String code);
 
+    List<MasterDataRecord> findMachinesByCode(String code);
+
     MasterDataRecord createFactory(String code, String name);
 
     MasterDataRecord createLine(UUID factoryId, String code, String name);
