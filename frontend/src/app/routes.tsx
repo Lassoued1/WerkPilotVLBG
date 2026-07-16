@@ -9,7 +9,7 @@ const DashboardPage = lazy(async () => {
 });
 
 const ImportsPage = lazy(async () => {
-  const module = await import("./pages/ImportsPage");
+  const module = await import("../features/imports/ImportsPage");
   return { default: module.ImportsPage };
 });
 

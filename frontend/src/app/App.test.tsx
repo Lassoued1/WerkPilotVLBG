@@ -1,5 +1,4 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { App } from "./App";
@@ -54,18 +53,18 @@ describe("WerkPilot frontend shell", () => {
       .toBeInTheDocument();
   });
 
-  it("validates the import form before later sprint upload behavior exists", async () => {
-    const user = userEvent.setup();
-
+  it("shows the read-only import banner without an upload-capable session", async () => {
     renderApp(["/imports"]);
 
-    await user.click(
-      await screen.findByRole("button", { name: "Import vorbereiten" }),
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "CSV-Import" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("note")).toHaveTextContent(
+      "Lesemodus: Ihre Rolle erlaubt keine CSV-Uploads.",
     );
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Bitte wählen Sie eine CSV-Datei aus.",
-    );
+    expect(
+      screen.getByRole("button", { name: "Import starten" }),
+    ).toBeDisabled();
   });
 
   it("renders a German not-found page for unknown routes", async () => {

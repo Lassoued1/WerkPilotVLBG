@@ -53,7 +53,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const session = readSession();
   const headers = new Headers(init.headers);
 
-  if (!headers.has("Content-Type") && init.body) {
+  if (!headers.has("Content-Type") && init.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   if (session?.accessToken) {
@@ -99,6 +99,12 @@ export function germanErrorMessage(error: unknown): string {
         return "Bitte prüfen Sie die Eingaben.";
       case "RESOURCE_NOT_FOUND":
         return "Der Datensatz wurde nicht gefunden.";
+      case "IMPORT_DUPLICATE_FILE":
+        return "Diese Datei wurde für diesen Importtyp bereits importiert.";
+      case "IMPORT_JOB_NOT_ELIGIBLE":
+        return "Nur ein festgeschriebener Import kann korrigiert oder zurückgerollt werden.";
+      case "CSV_VALIDATION_FAILED":
+        return "Die CSV-Datei konnte nicht validiert werden.";
       default:
         return "Die Anfrage konnte nicht verarbeitet werden.";
     }

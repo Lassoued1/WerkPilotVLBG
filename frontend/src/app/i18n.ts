@@ -37,16 +37,74 @@ void i18n.use(initReactI18next).init({
         imports: {
           title: "CSV-Import",
           description:
-            "Dieses Formular legt das UI-Muster fest. Verarbeitung und Berechtigungen folgen in Sprint 2.",
+            "CSV-Dateien hochladen, Importstatus verfolgen und Fehler einsehen. Korrektur und Rollback sind ADMIN vorbehalten.",
           type: "Importtyp",
           file: "CSV-Datei",
-          submit: "Import vorbereiten",
+          submit: "Import starten",
           required: "Bitte wählen Sie eine CSV-Datei aus.",
-          accepted: "Datei wurde für die spätere Importstrecke vorgemerkt.",
+          uploadStarted: "Der Import wurde gestartet und wird verarbeitet.",
+          readOnly:
+            "Lesemodus: Ihre Rolle erlaubt keine CSV-Uploads. Korrektur und Rollback sind ADMIN vorbehalten.",
           production: "Produktion",
           energy: "Energie",
           downtime: "Stillstand",
           scrap: "Ausschuss",
+          typeLabels: {
+            PRODUCTION_RECORDS: "Produktion",
+            ENERGY_MEASUREMENTS: "Energie",
+            DOWNTIME_RECORDS: "Stillstand",
+            SCRAP_RECORDS: "Ausschuss",
+          },
+          status: {
+            PROCESSING: "In Verarbeitung",
+            COMMITTED: "Festgeschrieben",
+            FAILED: "Fehlgeschlagen",
+            SUPERSEDED: "Ersetzt",
+          },
+          history: {
+            title: "Importverlauf",
+            description:
+              "Alle Import-Jobs mit Status, Zeilenzahlen und Fehlern. Laufende Jobs werden automatisch aktualisiert.",
+            type: "Typ",
+            file: "Datei",
+            status: "Status",
+            rows: "Zeilen (gültig/gesamt)",
+            errors: "Fehler",
+            createdAt: "Gestartet am",
+            actions: "Aktionen",
+            empty: "Noch keine Importe vorhanden.",
+            previous: "Zurück",
+            next: "Weiter",
+          },
+          actions: {
+            showErrors: "Fehler anzeigen",
+            correct: "Korrigieren",
+            rollback: "Zurückrollen",
+          },
+          errorsPanel: {
+            title: "Fehlerdetails",
+            loading: "Fehler werden geladen...",
+            overflow:
+              "Es werden maximal 500 Fehler gespeichert; weitere Fehler wurden gezählt, aber nicht aufgezeichnet.",
+            row: "Zeile",
+            column: "Spalte",
+            value: "Wert",
+            message: "Meldung",
+          },
+          correctionPanel: {
+            title: "Import korrigieren",
+            description:
+              "Eine gültige Ersatzdatei ersetzt den Import vollständig und atomar. Der ursprüngliche Job wird als Ersetzt markiert.",
+            submit: "Korrektur hochladen",
+          },
+          rollbackPanel: {
+            title: "Import zurückrollen",
+            description:
+              "Der Import wird ohne Ersatz als Ersetzt markiert und zählt nicht mehr für KPIs. Eine Begründung ist erforderlich.",
+            reason: "Begründung",
+            reasonRequired: "Bitte geben Sie eine Begründung an (max. 500 Zeichen).",
+            submit: "Rollback ausführen",
+          },
         },
         placeholders: {
           masterData:
