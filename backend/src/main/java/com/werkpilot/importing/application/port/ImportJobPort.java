@@ -22,4 +22,6 @@ public interface ImportJobPort {
     void replaceErrors(UUID importJobId, List<ImportJobErrorRecord> errors, int totalErrorCount);
 
     void markCommitted(UUID importJobId, int totalRows, int validRows);
+
+    boolean supersede(UUID importJobId, String reason);
 }

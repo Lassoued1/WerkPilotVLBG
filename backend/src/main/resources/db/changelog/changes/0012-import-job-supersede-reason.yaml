@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0012-01-import-job-supersede-reason
+      author: codex
+      comment: Add supersede reason column for WP-S2-06 correction and rollback.
+      changes:
+        - addColumn:
+            tableName: import_job
+            columns:
+              - column:
+                  name: superseded_reason
+                  type: varchar(500)
+      rollback:
+        - dropColumn:
+            tableName: import_job
+            columnName: superseded_reason

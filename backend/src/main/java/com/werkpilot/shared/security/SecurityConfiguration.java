@@ -58,6 +58,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/import-jobs/energy-measurements").hasAnyRole("ADMIN", "ENERGY_MANAGER")
                         .requestMatchers(HttpMethod.POST, "/import-jobs/downtime-records").hasAnyRole("ADMIN", "PRODUCTION_MANAGER")
                         .requestMatchers(HttpMethod.POST, "/import-jobs/scrap-records").hasAnyRole("ADMIN", "PRODUCTION_MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/import-jobs/*/correction").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/import-jobs/*/rollback").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/import-jobs/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/settings/global").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/settings/global/energy-threshold-delegation").hasRole("ADMIN")

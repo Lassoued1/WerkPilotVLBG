@@ -2,6 +2,7 @@ package com.werkpilot.importing.api;
 
 import com.werkpilot.importing.application.DowntimeCsvImportService;
 import com.werkpilot.importing.application.EnergyCsvImportService;
+import com.werkpilot.importing.application.ImportCorrectionDispatcher;
 import com.werkpilot.importing.application.ImportJobService;
 import com.werkpilot.importing.application.ProductionCsvImportService;
 import com.werkpilot.importing.application.ScrapCsvImportService;
@@ -10,13 +11,17 @@ import com.werkpilot.shared.api.JobResponse;
 import com.werkpilot.shared.api.JobStatus;
 import com.werkpilot.shared.api.PageResponse;
 import com.werkpilot.shared.security.AuthenticatedPrincipal;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -28,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImportJobController {
 
     private final ImportJobService importJobService;
+    private final ImportCorrectionDispatcher importCorrectionDispatcher;
     private final ProductionCsvImportService productionCsvImportService;
     private final EnergyCsvImportService energyCsvImportService;
     private final DowntimeCsvImportService downtimeCsvImportService;
@@ -35,11 +41,13 @@ public class ImportJobController {
 
     public ImportJobController(
             ImportJobService importJobService,
+            ImportCorrectionDispatcher importCorrectionDispatcher,
             ProductionCsvImportService productionCsvImportService,
             EnergyCsvImportService energyCsvImportService,
             DowntimeCsvImportService downtimeCsvImportService,
             ScrapCsvImportService scrapCsvImportService) {
         this.importJobService = importJobService;
+        this.importCorrectionDispatcher = importCorrectionDispatcher;
         this.productionCsvImportService = productionCsvImportService;
         this.energyCsvImportService = energyCsvImportService;
         this.downtimeCsvImportService = downtimeCsvImportService;
@@ -74,6 +82,20 @@ public class ImportJobController {
         return new JobResponse(job.id(), JobStatus.PROCESSING, job.createdAt(), job.completedAt());
     }
 
+    @PostMapping(path = "/{id}/correction", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    JobResponse correctImport(Authentication authentication, @PathVariable UUID id, @RequestPart("file") MultipartFile file) {
+        return jobResponse(importJobService.correct(id, file, principal(authentication), importCorrectionDispatcher::process));
+    }
+
+    @PostMapping("/{id}/rollback")
+    JobResponse rollbackImport(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody RollbackRequest request) {
+        return jobResponse(importJobService.rollback(id, request.reason(), principal(authentication)));
+    }
+
+    private static JobResponse jobResponse(ImportJobService.ImportJobStartResponse result) {
+        return new JobResponse(result.jobId(), JobStatus.valueOf(result.status()), result.createdAt(), result.completedAt());
+    }
+
     @GetMapping
     PageResponse<ImportJobService.ImportJobListItemResponse> listJobs(
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -95,5 +117,8 @@ public class ImportJobController {
 
     private static AuthenticatedPrincipal principal(Authentication authentication) {
         return (AuthenticatedPrincipal) authentication.getPrincipal();
+    }
+
+    record RollbackRequest(@NotBlank @Size(max = 500) String reason) {
     }
 }

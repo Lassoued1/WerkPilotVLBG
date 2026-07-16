@@ -18,11 +18,13 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -74,19 +76,90 @@ public class ImportJobService {
     }
 
     public ImportJobRecord startImport(ImportType importType, MultipartFile file, AuthenticatedPrincipal principal) {
-        if (file == null || file.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, "CSV file is required.");
-        }
-        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.CSV_VALIDATION_FAILED, "CSV file exceeds the configured size limit.");
-        }
+        validateFile(file);
 
         String hash = sha256(file);
         if (importJobPort.existsNormalImportByTypeAndHash(importType, hash)) {
             throw new ApiException(HttpStatus.CONFLICT, ErrorCode.IMPORT_DUPLICATE_FILE, "A file with the same hash was already imported for this type.");
         }
 
-        ImportJobRecord created = importJobPort.create(new ImportJobRecord(
+        ImportJobRecord created = createJob(importType, file, hash, null, principal);
+        auditEventPort.append(
+                AuditEventType.CSV_IMPORT_STARTED,
+                principal.userId(),
+                null,
+                "importJobId=%s; importType=%s; safeFilename=%s".formatted(created.id(), created.importType(), created.safeFilename()));
+        return created;
+    }
+
+    @Transactional
+    public ImportJobStartResponse correct(
+            UUID targetJobId,
+            MultipartFile file,
+            AuthenticatedPrincipal principal,
+            BiConsumer<ImportJobRecord, MultipartFile> processor) {
+        ImportJobRecord target = requireJob(targetJobId);
+        if (target.status() != ImportJobStatus.COMMITTED) {
+            throw new ApiException(HttpStatus.CONFLICT, ErrorCode.IMPORT_JOB_NOT_ELIGIBLE, "Only a committed import job can be corrected.");
+        }
+        validateFile(file);
+
+        ImportJobRecord created = createJob(target.importType(), file, sha256(file), target.id(), principal);
+        auditEventPort.append(
+                AuditEventType.CSV_IMPORT_STARTED,
+                principal.userId(),
+                null,
+                "importJobId=%s; importType=%s; correctsImportJobId=%s".formatted(created.id(), created.importType(), target.id()));
+
+        processor.accept(created, file);
+
+        ImportJobRecord result = importJobPort.findById(created.id()).orElseThrow();
+        if (result.status() == ImportJobStatus.COMMITTED) {
+            if (!importJobPort.supersede(target.id(), null)) {
+                throw new ApiException(HttpStatus.CONFLICT, ErrorCode.IMPORT_JOB_NOT_ELIGIBLE, "The import job changed state concurrently.");
+            }
+            auditEventPort.append(
+                    AuditEventType.CSV_IMPORT_CORRECTED,
+                    principal.userId(),
+                    null,
+                    "importJobId=%s; correctedByImportJobId=%s; importType=%s".formatted(target.id(), result.id(), target.importType()));
+        }
+        return job(result);
+    }
+
+    @Transactional
+    public ImportJobStartResponse rollback(UUID targetJobId, String reason, AuthenticatedPrincipal principal) {
+        ImportJobRecord target = requireJob(targetJobId);
+        if (target.status() != ImportJobStatus.COMMITTED) {
+            throw new ApiException(HttpStatus.CONFLICT, ErrorCode.IMPORT_JOB_NOT_ELIGIBLE, "Only a committed import job can be rolled back.");
+        }
+        if (!importJobPort.supersede(target.id(), reason)) {
+            throw new ApiException(HttpStatus.CONFLICT, ErrorCode.IMPORT_JOB_NOT_ELIGIBLE, "The import job changed state concurrently.");
+        }
+        auditEventPort.append(
+                AuditEventType.CSV_IMPORT_ROLLED_BACK,
+                principal.userId(),
+                null,
+                "importJobId=%s; importType=%s; reason=%s".formatted(target.id(), target.importType(), reason));
+        return job(importJobPort.findById(target.id()).orElseThrow());
+    }
+
+    private ImportJobRecord requireJob(UUID id) {
+        return importJobPort.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, "Import job was not found."));
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, "CSV file is required.");
+        }
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+            throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.CSV_VALIDATION_FAILED, "CSV file exceeds the configured size limit.");
+        }
+    }
+
+    private ImportJobRecord createJob(ImportType importType, MultipartFile file, String hash, UUID correctsImportJobId, AuthenticatedPrincipal principal) {
+        return importJobPort.create(new ImportJobRecord(
                 UUID.randomUUID(),
                 importType,
                 ImportJobStatus.PROCESSING,
@@ -98,18 +171,12 @@ public class ImportJobService {
                 0,
                 0,
                 false,
-                null,
+                correctsImportJobId,
                 principal.userId(),
                 clock.instant(),
                 null,
-                null));
-
-        auditEventPort.append(
-                AuditEventType.CSV_IMPORT_STARTED,
-                principal.userId(),
                 null,
-                "importJobId=%s; importType=%s; safeFilename=%s".formatted(created.id(), created.importType(), created.safeFilename()));
-        return created;
+                null));
     }
 
     public ImportJobPage<ImportJobListItemResponse> listJobs(int page, int size) {

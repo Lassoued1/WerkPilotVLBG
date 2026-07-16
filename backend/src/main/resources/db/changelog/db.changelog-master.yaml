@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/changes/0010-energy-measurements.yaml
   - include:
       file: db/changelog/changes/0011-downtime-scrap-records.yaml
+  - include:
+      file: db/changelog/changes/0012-import-job-supersede-reason.yaml

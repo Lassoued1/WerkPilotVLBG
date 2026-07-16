@@ -21,5 +21,6 @@ public record ImportJobRecord(
         UUID createdByUserId,
         Instant createdAt,
         Instant completedAt,
-        String failureReason) {
+        String failureReason,
+        String supersededReason) {
 }

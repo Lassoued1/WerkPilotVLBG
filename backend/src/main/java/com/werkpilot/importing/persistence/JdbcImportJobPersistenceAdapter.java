@@ -44,8 +44,8 @@ class JdbcImportJobPersistenceAdapter implements ImportJobPort {
                         insert into import_job
                         (id, import_type, status, original_filename, safe_filename, file_hash_sha256, file_size_bytes,
                          total_rows, valid_rows, error_count, error_overflow, corrects_import_job_id, created_by_user_id,
-                         created_at, completed_at, failure_reason)
-                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         created_at, completed_at, failure_reason, superseded_reason)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                 job.id(),
                 job.importType().name(),
@@ -62,7 +62,8 @@ class JdbcImportJobPersistenceAdapter implements ImportJobPort {
                 job.createdByUserId(),
                 Timestamp.from(job.createdAt()),
                 job.completedAt() == null ? null : Timestamp.from(job.completedAt()),
-                job.failureReason());
+                job.failureReason(),
+                job.supersededReason());
         return findById(job.id()).orElseThrow();
     }
 
@@ -134,6 +135,16 @@ class JdbcImportJobPersistenceAdapter implements ImportJobPort {
                 validRows,
                 importJobId);
     }
+
+    @Override
+    public boolean supersede(UUID importJobId, String reason) {
+        int updated = jdbcTemplate.update(
+                "update import_job set status = 'SUPERSEDED', superseded_reason = ? where id = ? and status = 'COMMITTED'",
+                reason,
+                importJobId);
+        return updated == 1;
+    }
+
     private ImportJobRecord mapJob(ResultSet resultSet, int rowNum) throws SQLException {
         Timestamp completedAt = resultSet.getTimestamp("completed_at");
         return new ImportJobRecord(
@@ -152,7 +163,8 @@ class JdbcImportJobPersistenceAdapter implements ImportJobPort {
                 resultSet.getObject("created_by_user_id", UUID.class),
                 resultSet.getTimestamp("created_at").toInstant(),
                 completedAt == null ? null : completedAt.toInstant(),
-                resultSet.getString("failure_reason"));
+                resultSet.getString("failure_reason"),
+                resultSet.getString("superseded_reason"));
     }
 
     private ImportJobErrorRecord mapError(ResultSet resultSet, int rowNum) throws SQLException {
@@ -170,7 +182,7 @@ class JdbcImportJobPersistenceAdapter implements ImportJobPort {
         return """
                 select id, import_type, status, original_filename, safe_filename, file_hash_sha256, file_size_bytes,
                        total_rows, valid_rows, error_count, error_overflow, corrects_import_job_id, created_by_user_id,
-                       created_at, completed_at, failure_reason
+                       created_at, completed_at, failure_reason, superseded_reason
                 from import_job
                 """;
     }
