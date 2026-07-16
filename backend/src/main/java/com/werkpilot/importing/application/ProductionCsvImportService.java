@@ -7,6 +7,7 @@ import com.werkpilot.importing.application.csv.CsvRow;
 import com.werkpilot.importing.application.csv.CsvTemplate;
 import com.werkpilot.importing.application.csv.CsvValidationError;
 import com.werkpilot.importing.application.csv.CsvValidationResult;
+import com.werkpilot.importing.application.csv.ImportMasterDataLookup;
 import com.werkpilot.importing.application.csv.StrictCsvParserService;
 import com.werkpilot.importing.application.port.ImportJobErrorRecord;
 import com.werkpilot.importing.application.port.ImportJobPort;
@@ -68,8 +69,9 @@ public class ProductionCsvImportService {
         List<ProductionRecordDraft> records = new ArrayList<>();
 
         if (result.valid()) {
+            ImportMasterDataLookup lookup = new ImportMasterDataLookup(masterDataPort);
             for (CsvRow row : result.rows()) {
-                Optional<ProductionRecordDraft> draft = toDraft(job.id(), row, semanticErrors);
+                Optional<ProductionRecordDraft> draft = toDraft(job.id(), row, semanticErrors, lookup);
                 draft.ifPresent(records::add);
             }
         }
@@ -93,16 +95,16 @@ public class ProductionCsvImportService {
                 "importJobId=%s; importType=%s; rows=%d".formatted(job.id(), job.importType(), records.size()));
     }
 
-    private Optional<ProductionRecordDraft> toDraft(UUID jobId, CsvRow row, List<CsvValidationError> errors) {
-        UUID factoryId = resolve(MasterDataKind.FACTORY, row, "factory_code", errors).orElse(null);
-        UUID shiftId = resolve(MasterDataKind.SHIFT, row, "shift_code", errors).orElse(null);
-        UUID productId = optionalResolve(MasterDataKind.PRODUCT, row, "product_code", errors).orElse(null);
+    private Optional<ProductionRecordDraft> toDraft(UUID jobId, CsvRow row, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
+        UUID factoryId = resolve(MasterDataKind.FACTORY, row, "factory_code", errors, lookup).orElse(null);
+        UUID shiftId = resolve(MasterDataKind.SHIFT, row, "shift_code", errors, lookup).orElse(null);
+        UUID productId = optionalResolve(MasterDataKind.PRODUCT, row, "product_code", errors, lookup).orElse(null);
         UUID lineId = null;
         UUID machineId = null;
 
         String lineCode = row.values().get("line_code");
         if (factoryId != null && lineCode != null && !lineCode.isBlank()) {
-            Optional<MasterDataRecord> line = masterDataPort.findLineByFactoryAndCode(factoryId, lineCode).filter(MasterDataRecord::active);
+            Optional<MasterDataRecord> line = lookup.lineByFactoryAndCode(factoryId, lineCode).filter(MasterDataRecord::active);
             if (line.isEmpty()) {
                 errors.add(error(row, "line_code", lineCode, "Der Stammdatencode ist unbekannt oder inaktiv."));
             } else {
@@ -112,7 +114,7 @@ public class ProductionCsvImportService {
 
         String machineCode = row.values().get("machine_code");
         if (factoryId != null && machineCode != null && !machineCode.isBlank()) {
-            Optional<MasterDataRecord> machine = masterDataPort.findMachineByFactoryAndCode(factoryId, machineCode).filter(MasterDataRecord::active);
+            Optional<MasterDataRecord> machine = lookup.machineByFactoryAndCode(factoryId, machineCode).filter(MasterDataRecord::active);
             if (machine.isEmpty()) {
                 errors.add(error(row, "machine_code", machineCode, "Der Stammdatencode ist unbekannt oder inaktiv."));
             } else {
@@ -147,25 +149,21 @@ public class ProductionCsvImportService {
                 blankToNull(row.values().get("batch_code"))));
     }
 
-    private Optional<UUID> resolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors) {
+    private Optional<UUID> resolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
         String code = row.values().get(column);
-        Optional<UUID> id = active(kind, code);
+        Optional<UUID> id = lookup.byCode(kind, code).filter(MasterDataRecord::active).map(MasterDataRecord::id);
         if (id.isEmpty()) {
             errors.add(error(row, column, code, "Der Stammdatencode ist unbekannt oder inaktiv."));
         }
         return id;
     }
 
-    private Optional<UUID> optionalResolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors) {
+    private Optional<UUID> optionalResolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
         String code = row.values().get(column);
         if (code == null || code.isBlank()) {
             return Optional.empty();
         }
-        return resolve(kind, row, column, errors);
-    }
-
-    private Optional<UUID> active(MasterDataKind kind, String code) {
-        return masterDataPort.findByCode(kind, code).filter(MasterDataRecord::active).map(MasterDataRecord::id);
+        return resolve(kind, row, column, errors, lookup);
     }
 
     private static CsvValidationError error(CsvRow row, String column, String value, String message) {

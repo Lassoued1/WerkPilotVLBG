@@ -9,6 +9,7 @@ import com.werkpilot.importing.application.csv.CsvRow;
 import com.werkpilot.importing.application.csv.CsvTemplate;
 import com.werkpilot.importing.application.csv.CsvValidationError;
 import com.werkpilot.importing.application.csv.CsvValidationResult;
+import com.werkpilot.importing.application.csv.ImportMasterDataLookup;
 import com.werkpilot.importing.application.csv.StrictCsvParserService;
 import com.werkpilot.importing.application.port.ImportJobErrorRecord;
 import com.werkpilot.importing.application.port.ImportJobPort;
@@ -65,17 +66,18 @@ public class DowntimeCsvImportService {
         List<CsvValidationError> semanticErrors = new ArrayList<>(result.errors());
         List<DowntimeRecordDraft> records = new ArrayList<>();
         if (result.valid()) {
+            ImportMasterDataLookup lookup = new ImportMasterDataLookup(masterDataPort);
             for (CsvRow row : result.rows()) {
-                toDraft(job.id(), row, semanticErrors).ifPresent(records::add);
+                toDraft(job.id(), row, semanticErrors, lookup).ifPresent(records::add);
             }
         }
         finish(job, file, result, semanticErrors, records);
     }
 
-    private Optional<DowntimeRecordDraft> toDraft(UUID jobId, CsvRow row, List<CsvValidationError> errors) {
-        UUID machineId = resolveUniqueMachine(row, errors).orElse(null);
-        UUID shiftId = resolve(MasterDataKind.SHIFT, row, "shift_code", errors).orElse(null);
-        UUID reasonId = resolve(MasterDataKind.DOWNTIME_REASON, row, "reason_code", errors).orElse(null);
+    private Optional<DowntimeRecordDraft> toDraft(UUID jobId, CsvRow row, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
+        UUID machineId = resolveUniqueMachine(row, errors, lookup).orElse(null);
+        UUID shiftId = resolve(MasterDataKind.SHIFT, row, "shift_code", errors, lookup).orElse(null);
+        UUID reasonId = resolve(MasterDataKind.DOWNTIME_REASON, row, "reason_code", errors, lookup).orElse(null);
         Instant start = Instant.parse(row.values().get("period_start"));
         Instant end = Instant.parse(row.values().get("period_end"));
         if (!end.isAfter(start)) {
@@ -107,18 +109,18 @@ public class DowntimeCsvImportService {
                 "importJobId=%s; importType=%s; rows=%d".formatted(job.id(), job.importType(), records.size()));
     }
 
-    private Optional<UUID> resolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors) {
+    private Optional<UUID> resolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
         String code = row.values().get(column);
-        Optional<UUID> id = masterDataPort.findByCode(kind, code).filter(MasterDataRecord::active).map(MasterDataRecord::id);
+        Optional<UUID> id = lookup.byCode(kind, code).filter(MasterDataRecord::active).map(MasterDataRecord::id);
         if (id.isEmpty()) {
             errors.add(error(row, column, code, "Der Stammdatencode ist unbekannt oder inaktiv."));
         }
         return id;
     }
 
-    private Optional<UUID> resolveUniqueMachine(CsvRow row, List<CsvValidationError> errors) {
+    private Optional<UUID> resolveUniqueMachine(CsvRow row, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {
         String code = row.values().get("machine_code");
-        List<MasterDataRecord> machines = masterDataPort.findMachinesByCode(code).stream().filter(MasterDataRecord::active).toList();
+        List<MasterDataRecord> machines = lookup.machinesByCode(code).stream().filter(MasterDataRecord::active).toList();
         if (machines.size() != 1) {
             errors.add(error(row, "machine_code", code, machines.isEmpty() ? "Der Stammdatencode ist unbekannt oder inaktiv." : "Der Maschinencode ist nicht eindeutig."));
             return Optional.empty();

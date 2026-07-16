@@ -20,23 +20,25 @@ class JdbcEnergyMeasurementPersistenceAdapter implements EnergyMeasurementPort {
 
     @Override
     public void insertAll(List<EnergyMeasurementDraft> measurements) {
-        for (EnergyMeasurementDraft measurement : measurements) {
-            jdbcTemplate.update(
-                    """
-                            insert into energy_measurement
-                            (id, import_job_id, period_start, period_end, factory_id, line_id, machine_id, shift_id, energy_kwh)
-                            values (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            """,
-                    measurement.id(),
-                    measurement.importJobId(),
-                    Timestamp.from(measurement.periodStart()),
-                    Timestamp.from(measurement.periodEnd()),
-                    measurement.factoryId(),
-                    measurement.lineId(),
-                    measurement.machineId(),
-                    measurement.shiftId(),
-                    measurement.energyKwh());
-        }
+        jdbcTemplate.batchUpdate(
+                """
+                        insert into energy_measurement
+                        (id, import_job_id, period_start, period_end, factory_id, line_id, machine_id, shift_id, energy_kwh)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                measurements,
+                1000,
+                (statement, measurement) -> {
+                    statement.setObject(1, measurement.id());
+                    statement.setObject(2, measurement.importJobId());
+                    statement.setTimestamp(3, Timestamp.from(measurement.periodStart()));
+                    statement.setTimestamp(4, Timestamp.from(measurement.periodEnd()));
+                    statement.setObject(5, measurement.factoryId());
+                    statement.setObject(6, measurement.lineId());
+                    statement.setObject(7, measurement.machineId());
+                    statement.setObject(8, measurement.shiftId());
+                    statement.setBigDecimal(9, measurement.energyKwh());
+                });
     }
 
     @Override
