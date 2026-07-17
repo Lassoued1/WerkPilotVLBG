@@ -19,10 +19,10 @@ Le projet suit un backlog en 6 sprints :
 
 | Sprint | Objectif principal | Statut actuel |
 | --- | --- | --- |
-| Sprint 0 | Baseline architecture, toolchain, Docker, gates | Quasi termine, validations finales a confirmer |
-| Sprint 1 | Identity, RBAC, users, audit, master data | Backend largement avance, frontend a completer |
-| Sprint 2 | Imports CSV asynchrones, correction, rollback | Planifie |
-| Sprint 3 | APIs KPI, agregations, dashboard | Planifie |
+| Sprint 0 | Baseline architecture, toolchain, Docker, gates | Termine / stabilise pour les sprints suivants |
+| Sprint 1 | Identity, RBAC, users, audit, master data | Termine |
+| Sprint 2 | Imports CSV asynchrones, correction, rollback | Termine |
+| Sprint 3 | APIs KPI, agregations, dashboard | Termine jusqu'a WP-S3-06 |
 | Sprint 4 | Analytics, anomalies, maintenance | Planifie |
 | Sprint 5 | Reporting, operations, hardening, acceptance | Planifie |
 
@@ -58,6 +58,60 @@ Roles RBAC fixes :
 - `VIEWER`
 
 Le backend reste l'autorite metier. Le frontend ne doit pas recalculer les KPI, les droits, les statuts ou les regles de validation ; il consomme les API backend et affiche les resultats.
+
+## Etat Sprint 3
+
+Sprint 3 couvre les KPI backend, les APIs d'agregation et le dashboard frontend.
+
+| Tache | Statut | Zone | Preuve principale |
+| --- | --- | --- | --- |
+| WP-S3-01 KPI calculation services | Done | Backend | `.\mvnw.cmd "-Dtest=KpiCalculationServiceTest" test` |
+| WP-S3-02 Time/filter/active-data query policy | Done | Backend | `.\mvnw.cmd "-Dtest=TimeWindowAggregationIT,KpiFilteringIT" verify` |
+| WP-S3-03 Production and energy APIs | Done | Backend | `.\mvnw.cmd "-Dtest=ProductionApiIT,EnergyApiIT" verify` |
+| WP-S3-04 Downtime and scrap APIs | Done | Backend | `.\mvnw.cmd "-Dtest=DowntimeApiIT,ScrapApiIT" verify` |
+| WP-S3-05 Dashboard summary and performance | Done | Backend | `.\mvnw.cmd "-Dtest=DashboardApiIT,DashboardPerformanceIT" verify` |
+| WP-S3-06 Dashboard and monitoring UI | Done | Frontend | `npm test -- --run src/features/dashboard src/features/machines src/features/production` |
+
+Preuves recentes :
+
+```powershell
+cd backend
+.\mvnw.cmd clean verify
+# 100 tests, 0 failure, 0 error
+
+cd ..\frontend
+npm test -- --run
+# 8 files, 19 tests
+
+npm run lint
+npm run build
+```
+
+Runbook associe :
+
+```text
+docs/runbooks/sprint3-dashboard-performance.md
+```
+
+Ce runbook decrit comment produire une evidence performance durable pour le dashboard, notamment le benchmark cible de 500 000 lignes.
+
+## APIs KPI et dashboard disponibles
+
+Les endpoints Sprint 3 consommes par le frontend sont :
+
+| Endpoint | Usage |
+| --- | --- |
+| `GET /dashboard/summary` | Cartes KPI, tendance production, Pareto downtime, top consommateurs energie |
+| `GET /production/kpis` | KPI production |
+| `GET /production/records` | Liste paginee des enregistrements production |
+| `GET /production/trends` | Tendance production |
+| `GET /production/evidence.csv` | Evidence CSV production |
+| `GET /energy/kpis` | KPI energie |
+| `GET /energy/top-consumers` | Top consommateurs energie |
+| `GET /downtime/pareto` | Pareto downtime et disponibilite |
+| `GET /quality/scrap-rate` | Taux d'ausschuss / scrap rate |
+
+Toutes les requetes KPI utilisent des intervalles `[from,to)` et uniquement les donnees issues de jobs `COMMITTED`. Les lignes `SUPERSEDED` restent disponibles pour la tracabilite mais sont exclues des KPI.
 
 ## Stack technique
 
@@ -161,7 +215,7 @@ Il desactive le health check SMTP pendant les tests Maven, tout en gardant le be
 Ouvrir le dossier :
 
 ```text
-frontend/
+D:\IntellijProjects\WerkPilotVLBG
 ```
 
 Installer les dependances :
@@ -183,6 +237,12 @@ Valider le frontend :
 npm run lint
 npm test -- --run
 npm run build
+```
+
+Test cible Sprint 3 UI :
+
+```powershell
+npm test -- --run src/features/dashboard src/features/machines src/features/production
 ```
 
 ## Gates qualite
@@ -237,6 +297,15 @@ Regle de coordination :
 3. Les tests backend et frontend sont relances.
 4. Le sprint n'est ferme qu'apres evidence et approbation Mohamed.
 
+Directive de collaboration :
+
+- Les actions git doivent utiliser l'identite `Lassoued1 <mohamed.lassoued@gmail.com>`.
+- Ne pas committer ou pousser avec une identite `Codex`.
+- Les changements backend sont geres dans IntelliJ/Codex.
+- Les changements frontend sont geres dans VS Code/Codex.
+- Les sorties IA doivent etre verifiees par des tests reproductibles : "trust then verify".
+- Les runbooks et harnesses de tests doivent etre reutilisables lorsque possible.
+
 ## Documentation projet
 
 | Document | Role |
@@ -251,6 +320,7 @@ Regle de coordination :
 | `docs/TEST_STRATEGY.md` | Strategie de tests et acceptance |
 | `docs/IMPLEMENTATION_BACKLOG.md` | Backlog sprint par sprint |
 | `docs/PUSH_CHECKLIST.md` | Checklist avant push |
+| `docs/runbooks/sprint3-dashboard-performance.md` | Runbook performance dashboard Sprint 3 |
 
 ## Regles de push
 
@@ -337,3 +407,16 @@ Sprint 0 peut etre ferme uniquement si les elements suivants sont verts :
 - approbation Mohamed
 
 Tant que ces preuves ne sont pas attachees, le sprint reste "quasi termine" mais pas officiellement "Done".
+
+## Statut d'acceptation Sprint 3
+
+Sprint 3 peut etre considere termine lorsque les preuves suivantes sont vertes :
+
+- backend `.\mvnw.cmd clean verify`
+- frontend `npm test -- --run`
+- frontend `npm run lint`
+- frontend `npm run build`
+- revue que le frontend affiche les KPI backend sans recalcul navigateur
+- evidence performance dashboard selon le runbook Sprint 3 pour l'environnement pilote/CI
+
+Etat actuel local : les gates backend et frontend ont ete executes avec succes apres WP-S3-06.
