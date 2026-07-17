@@ -4,8 +4,18 @@ import { createBrowserRouter, createMemoryRouter } from "react-router";
 import { AppLayout } from "./layout/AppLayout";
 
 const DashboardPage = lazy(async () => {
-  const module = await import("./pages/DashboardPage");
+  const module = await import("../features/dashboard/DashboardPage");
   return { default: module.DashboardPage };
+});
+
+const MachinesPage = lazy(async () => {
+  const module = await import("../features/machines/MachinesPage");
+  return { default: module.MachinesPage };
+});
+
+const ProductionPage = lazy(async () => {
+  const module = await import("../features/production/ProductionPage");
+  return { default: module.ProductionPage };
 });
 
 const ImportsPage = lazy(async () => {
@@ -58,6 +68,8 @@ export const routes = [
     children: [
       { index: true, element: pageElement(<DashboardPage />) },
       { path: "login", element: pageElement(<AuthPage />) },
+      { path: "machines", element: pageElement(<MachinesPage />) },
+      { path: "production", element: pageElement(<ProductionPage />) },
       { path: "imports", element: pageElement(<ImportsPage />) },
       { path: "master-data", element: pageElement(<MasterDataPage />) },
       {

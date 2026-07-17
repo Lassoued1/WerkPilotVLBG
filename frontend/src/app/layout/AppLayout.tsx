@@ -6,6 +6,8 @@ import { apiBaseUrl } from "../../shared/api/client";
 const navigationItems = [
   { to: "/", labelKey: "nav.dashboard" },
   { to: "/login", labelKey: "nav.login" },
+  { to: "/machines", labelKey: "nav.machines" },
+  { to: "/production", labelKey: "nav.production" },
   { to: "/imports", labelKey: "nav.imports" },
   { to: "/master-data", labelKey: "nav.masterData" },
   { to: "/maintenance", labelKey: "nav.maintenance" },

@@ -161,8 +161,14 @@ select {
 
 .metric-label,
 .metric-unit,
-.fallback-title {
+.fallback-title,
+.metric-help {
   color: #526174;
+}
+
+.metric-help {
+  margin-top: 8px;
+  font-size: 0.78rem;
 }
 
 .panel {
@@ -177,6 +183,29 @@ select {
 
 .chart-frame {
   min-height: 280px;
+}
+
+.filter-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.filter-submit {
+  align-self: end;
+}
+
+.dashboard-metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.traceability-table code {
+  white-space: nowrap;
+  font-size: 0.78rem;
 }
 
 .data-table {
@@ -296,11 +325,18 @@ select {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .filter-panel,
+  .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
   .nav-list,
-  .metric-grid {
+  .metric-grid,
+  .filter-panel,
+  .dashboard-metric-grid {
     grid-template-columns: 1fr;
   }
 }

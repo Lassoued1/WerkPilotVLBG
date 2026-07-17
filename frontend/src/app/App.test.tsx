@@ -1,15 +1,31 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 import { createTestRouter } from "./routes";
+import { dashboardSummary } from "../features/dashboard/testSupport";
 
 function renderApp(initialEntries = ["/"]) {
   return render(<App router={createTestRouter(initialEntries)} />);
 }
 
+function stubDashboard() {
+  return vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify(dashboardSummary()), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("WerkPilot frontend shell", () => {
   it("renders the German dashboard shell and planned navigation areas", async () => {
+    stubDashboard();
+
     renderApp();
 
     expect(
@@ -24,6 +40,14 @@ describe("WerkPilot frontend shell", () => {
       "href",
       "/imports",
     );
+    expect(screen.getByRole("link", { name: "Maschinen" })).toHaveAttribute(
+      "href",
+      "/machines",
+    );
+    expect(screen.getByRole("link", { name: "Produktion" })).toHaveAttribute(
+      "href",
+      "/production",
+    );
     expect(screen.getByRole("link", { name: "Stammdaten" })).toHaveAttribute(
       "href",
       "/master-data",
@@ -36,9 +60,12 @@ describe("WerkPilot frontend shell", () => {
   });
 
   it("renders a table fallback for chart data", async () => {
+    stubDashboard();
+
     renderApp();
 
-    const table = await screen.findByRole("table");
+    const tables = await screen.findAllByRole("table");
+    const table = tables[0];
 
     expect(
       screen.getByRole("heading", {
@@ -49,7 +76,7 @@ describe("WerkPilot frontend shell", () => {
     expect(
       within(table).getByRole("columnheader", { name: "Zeitraum" }),
     ).toBeInTheDocument();
-    expect(within(table).getByRole("rowheader", { name: "Mo" }))
+    expect(within(table).getByRole("columnheader", { name: "Einheiten" }))
       .toBeInTheDocument();
   });
 

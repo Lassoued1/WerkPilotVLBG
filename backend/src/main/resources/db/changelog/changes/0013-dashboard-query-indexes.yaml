@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0013-01-dashboard-query-indexes
+      author: lassoued1
+      comment: Add query indexes for Sprint 3 dashboard KPI filters.
+      changes:
+        - createIndex:
+            tableName: production_record
+            indexName: ix_production_record_dashboard_filters
+            columns:
+              - column:
+                  name: factory_id
+              - column:
+                  name: line_id
+              - column:
+                  name: machine_id
+              - column:
+                  name: product_id
+              - column:
+                  name: shift_id
+              - column:
+                  name: period_start
+              - column:
+                  name: period_end
+        - createIndex:
+            tableName: energy_measurement
+            indexName: ix_energy_measurement_dashboard_filters
+            columns:
+              - column:
+                  name: factory_id
+              - column:
+                  name: line_id
+              - column:
+                  name: machine_id
+              - column:
+                  name: shift_id
+              - column:
+                  name: period_start
+              - column:
+                  name: period_end
+        - createIndex:
+            tableName: downtime_record
+            indexName: ix_downtime_record_dashboard_filters
+            columns:
+              - column:
+                  name: machine_id
+              - column:
+                  name: shift_id
+              - column:
+                  name: reason_id
+              - column:
+                  name: period_start
+              - column:
+                  name: period_end
+        - createIndex:
+            tableName: scrap_record
+            indexName: ix_scrap_record_dashboard_filters
+            columns:
+              - column:
+                  name: machine_id
+              - column:
+                  name: product_id
+              - column:
+                  name: shift_id
+              - column:
+                  name: scrap_category_id
+              - column:
+                  name: period_start
+              - column:
+                  name: period_end

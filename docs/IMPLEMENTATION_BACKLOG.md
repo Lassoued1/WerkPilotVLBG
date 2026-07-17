@@ -96,12 +96,12 @@ Stop for approval.
 
 | Task | Status | Depends on | Source | Deliverable | Focused proof before B/F |
 | --- | --- | --- | --- | --- | --- |
-| WP-S3-01 KPI calculation services | Planned | S2-03..06 | §4.2; PRD-02..05, ENE-02..04, DTS-02..05; TEST-01 | Pure production, energy/unit, scrap, downtime, availability and backlog calculations. | `.\mvnw.cmd "-Dtest=KpiCalculationServiceTest" test` |
-| WP-S3-02 Time/filter/active-data query policy | Planned | S3-01 | §§16.6, 20.1, 24.6; EC-01..04; OQ-005 | Canonical `[from,to)` windows, fully contained rows, no proration, UTC/Vienna, COMMITTED-only queries. | `.\mvnw.cmd "-Dtest=TimeWindowAggregationIT,KpiFilteringIT" verify` |
-| WP-S3-03 Production and energy APIs | Planned | S3-01, S3-02 | PRD-02..06, ENE-02..04, ENE-06 | Records, trends, output/hour, totals, energy/unit availability, top ten and evidence CSV. | `.\mvnw.cmd "-Dtest=ProductionApiIT,EnergyApiIT" verify` |
-| WP-S3-04 Downtime and scrap APIs | Planned | S3-01, S3-02 | DTS-02..05 | Totals, exact Pareto/cumulative percentage, scrap rate and filters. | `.\mvnw.cmd "-Dtest=DowntimeApiIT,ScrapApiIT" verify` |
-| WP-S3-05 Dashboard summary and performance | Planned | S3-03, S3-04 | S-09; NFR-02; ACC-05 | Shared filters/aggregates, cards/trends, indexes and 500k performance evidence. | `.\mvnw.cmd "-Dtest=DashboardApiIT,DashboardPerformanceIT" verify` |
-| WP-S3-06 Dashboard and monitoring UI | Planned | S0-06, S3-05 | §25.1; ACC-05 | German cards/filters/charts/table fallbacks, machine/record views and traceability. | `npm test -- --run src/features/dashboard src/features/machines src/features/production` |
+| WP-S3-01 KPI calculation services | Done | S2-03..06 | §4.2; PRD-02..05, ENE-02..04, DTS-02..05; TEST-01 | Pure production, energy/unit, scrap, downtime, availability and backlog calculations. | `.\mvnw.cmd "-Dtest=KpiCalculationServiceTest" test` |
+| WP-S3-02 Time/filter/active-data query policy | Done | S3-01 | §§16.6, 20.1, 24.6; EC-01..04; OQ-005 | Canonical `[from,to)` windows, fully contained rows, no proration, UTC/Vienna, COMMITTED-only queries. | `.\mvnw.cmd "-Dtest=TimeWindowAggregationIT,KpiFilteringIT" verify` |
+| WP-S3-03 Production and energy APIs | Done | S3-01, S3-02 | PRD-02..06, ENE-02..04, ENE-06 | Records, trends, output/hour, totals, energy/unit availability, top ten and evidence CSV. | `.\mvnw.cmd "-Dtest=ProductionApiIT,EnergyApiIT" verify` |
+| WP-S3-04 Downtime and scrap APIs | Done | S3-01, S3-02 | DTS-02..05 | Totals, exact Pareto/cumulative percentage, scrap rate and filters. | `.\mvnw.cmd "-Dtest=DowntimeApiIT,ScrapApiIT" verify` |
+| WP-S3-05 Dashboard summary and performance | Done | S3-03, S3-04 | S-09; NFR-02; ACC-05 | Shared filters/aggregates, cards/trends, indexes and 500k performance evidence. | `.\mvnw.cmd "-Dtest=DashboardApiIT,DashboardPerformanceIT" verify` |
+| WP-S3-06 Dashboard and monitoring UI | Done | S0-06, S3-05 | §25.1; ACC-05 | German cards/filters/charts/table fallbacks, machine/record views and traceability. | `npm test -- --run src/features/dashboard src/features/machines src/features/production` |
 
 Sprint 3 exit: fixture KPIs match exactly, the browser never recalculates them,
 and the 500k dashboard target passes. Stop for approval.

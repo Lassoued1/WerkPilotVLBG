@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/changes/0011-downtime-scrap-records.yaml
   - include:
       file: db/changelog/changes/0012-import-job-supersede-reason.yaml
+  - include:
+      file: db/changelog/changes/0013-dashboard-query-indexes.yaml
