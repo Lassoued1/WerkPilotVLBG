@@ -25,3 +25,9 @@ databaseChangeLog:
       file: db/changelog/changes/0012-import-job-supersede-reason.yaml
   - include:
       file: db/changelog/changes/0013-dashboard-query-indexes.yaml
+  - include:
+      file: db/changelog/changes/0014-thresholds.yaml
+  - include:
+      file: db/changelog/changes/0015-anomalies-recommendations.yaml
+  - include:
+      file: db/changelog/changes/0016-maintenance-tickets.yaml
