@@ -17,12 +17,14 @@ import com.werkpilot.importing.application.port.ImportJobRecord;
 import com.werkpilot.masterdata.application.MasterDataKind;
 import com.werkpilot.masterdata.application.port.MasterDataPort;
 import com.werkpilot.masterdata.application.port.MasterDataRecord;
+import com.werkpilot.shared.events.ImportAnalyticsChangedEvent;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +47,7 @@ public class EnergyCsvImportService {
     private final ImportJobPort importJobPort;
     private final ImportJobService importJobService;
     private final AuditEventPort auditEventPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public EnergyCsvImportService(
             StrictCsvParserService csvParser,
@@ -52,13 +55,15 @@ public class EnergyCsvImportService {
             EnergyMeasurementPort energyMeasurementPort,
             ImportJobPort importJobPort,
             ImportJobService importJobService,
-            AuditEventPort auditEventPort) {
+            AuditEventPort auditEventPort,
+            ApplicationEventPublisher eventPublisher) {
         this.csvParser = csvParser;
         this.masterDataPort = masterDataPort;
         this.energyMeasurementPort = energyMeasurementPort;
         this.importJobPort = importJobPort;
         this.importJobService = importJobService;
         this.auditEventPort = auditEventPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -93,6 +98,7 @@ public class EnergyCsvImportService {
         importJobPort.markCommitted(job.id(), totalRows, measurements.size());
         auditEventPort.append(AuditEventType.CSV_IMPORT_COMMITTED, job.createdByUserId(), null,
                 "importJobId=%s; importType=%s; rows=%d".formatted(job.id(), job.importType(), measurements.size()));
+        eventPublisher.publishEvent(new ImportAnalyticsChangedEvent(job.id(), job.importType().name()));
     }
 
     private Optional<EnergyMeasurementDraft> toDraft(UUID jobId, CsvRow row, List<CsvValidationError> errors, List<GranularityWindow> windows, ImportMasterDataLookup lookup) {
@@ -202,4 +208,3 @@ public class EnergyCsvImportService {
     private record GranularityWindow(UUID lineId, Instant start, Instant end, boolean machineLevel) {
     }
 }
-

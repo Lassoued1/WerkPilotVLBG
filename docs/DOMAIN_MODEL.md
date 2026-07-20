@@ -147,6 +147,14 @@ They must not add new business behavior.
 
 ### Analytics
 
+- Thresholds define deterministic absolute bounds for anomaly detection. A
+  threshold carries `metric_key`, `scope_type`, optional `scope_id`, nullable
+  `min_value`/`max_value`, `severity`, `active`, creation/update actor, and
+  timestamps. `GLOBAL` thresholds have no `scope_id`; factory, line, machine,
+  product, and shift thresholds require an existing master-data UUID.
+- Active threshold definitions are unique by metric, scope, scope identifier,
+  and severity at application level. Deleting a threshold is a soft-disable so
+  historical anomaly/audit interpretation remains possible.
 - Anomalies retain type, status, severity, explanation, observed/baseline
   values, baseline quality, detection method, affected interval, asset, and
   detector version.

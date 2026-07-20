@@ -10,6 +10,7 @@ const navigationItems = [
   { to: "/production", labelKey: "nav.production" },
   { to: "/imports", labelKey: "nav.imports" },
   { to: "/master-data", labelKey: "nav.masterData" },
+  { to: "/anomalies", labelKey: "nav.anomalies" },
   { to: "/maintenance", labelKey: "nav.maintenance" },
   { to: "/reports", labelKey: "nav.reports" },
   { to: "/administration", labelKey: "nav.administration" },

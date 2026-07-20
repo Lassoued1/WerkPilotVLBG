@@ -142,6 +142,24 @@ resolvable after soft delete and returns `active=false`.
 energy-threshold write authorization. ENERGY_MANAGER passes only while this
 flag is `true`; other roles are denied.
 
+### Threshold administration
+
+| Method | Path | Access | Contract |
+| --- | --- | --- | --- |
+| GET | `/thresholds` | Authenticated | Paginated list of active thresholds by default; optional `metricKey`, `scopeType`, `includeInactive`, `page`, and `size`. |
+| GET | `/thresholds/{id}` | Authenticated | Return one threshold, including inactive records. |
+| POST | `/thresholds` | ADMIN; ENERGY_MANAGER for energy metrics only when delegation is ON | Create threshold and append `THRESHOLD_CHANGED`. |
+| PUT | `/thresholds/{id}` | ADMIN; ENERGY_MANAGER for energy metrics only when delegation is ON | Replace threshold definition and append `THRESHOLD_CHANGED`. |
+| DELETE | `/thresholds/{id}` | ADMIN; ENERGY_MANAGER for energy metrics only when delegation is ON | Soft-disable threshold and append `THRESHOLD_CHANGED`. |
+
+Supported `metricKey` values are `ENERGY_KWH`, `ENERGY_PER_UNIT`,
+`OUTPUT_PER_HOUR`, `AVAILABILITY`, `DOWNTIME_MINUTES`, and `SCRAP_RATE`.
+Supported `scopeType` values are `GLOBAL`, `FACTORY`, `LINE`, `MACHINE`,
+`PRODUCT`, and `SHIFT`. `GLOBAL` requires `scopeId=null`; all other scopes
+require an existing master-data UUID. At least one of `minValue` or `maxValue`
+is required, and `minValue <= maxValue` when both are present. `severity` is
+`WARNING` or `CRITICAL`.
+
 ### Audit
 
 | Method | Path | Access | Contract |
@@ -183,9 +201,13 @@ rows whose job is `COMMITTED`.
 | GET | `/anomalies` | All roles |
 | GET | `/anomalies/{id}` | All roles |
 | PATCH | `/anomalies/{id}/status` | Authorized managers/admin; technician limited |
+| POST | `/anomalies/rerun` | ADMIN |
 
-AN-02 requires an ADMIN recalculation endpoint. Its exact path and DTO are
-frozen in OpenAPI before Sprint 4; its behavior must follow Section 23.4.
+`POST /anomalies/rerun` accepts `from`, `to`, and optional `factoryId`,
+`lineId`, `machineId`, `productId`, `shiftId`. It returns created,
+superseded, unchanged, and detected counts. Reruns use fixed detection identity;
+unchanged reruns are no-ops, changed results supersede and link a NEW successor,
+and disappeared results supersede without successor.
 
 ### Maintenance and reports
 

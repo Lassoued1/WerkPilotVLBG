@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Feature tests mock the browser fetch globally; avoid cross-file mock races.
+    fileParallelism: false,
   },
 });

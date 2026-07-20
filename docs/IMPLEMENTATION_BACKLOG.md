@@ -110,12 +110,12 @@ and the 500k dashboard target passes. Stop for approval.
 
 | Task | Status | Depends on | Source | Deliverable | Focused proof before B/F |
 | --- | --- | --- | --- | --- | --- |
-| WP-S4-01 Threshold model and administration | Planned | S1-05, S3-02 | S-12, ENE-05; OQ-003 | Threshold CRUD/scope, global delegation authorization and audit. | `.\mvnw.cmd "-Dtest=ThresholdAdministrationIT" verify` |
-| WP-S4-02 Deterministic anomaly engine | Planned | S3-03..05, S4-01 | AN-01, AN-03; ENE-05, DTS-06 | Baselines, threshold fallback, z-score boundaries, severity, explanation and import trigger. | `.\mvnw.cmd "-Dtest=AnomalyDetectionServiceTest" test` |
-| WP-S4-03 Rerun identity and supersession | Planned | S2-06, S4-02 | AN-02, AN-04; §23.4; OQ-007 | ADMIN rerun, fixed identity, no-op/changed/disappeared behavior and linked history. | `.\mvnw.cmd "-Dtest=AnalyticsRerunIT,AnomalySupersessionIT" verify` |
-| WP-S4-04 Recommendation templates and disclaimer | Planned | S4-02 | AN-05; TEST-05; §23.5; CR-001 | Versioned deterministic templates and exact German disclaimer carrier/tests. | `.\mvnw.cmd "-Dtest=RecommendationServiceTest" test` |
-| WP-S4-05 Anomaly API and UI | Planned | S4-03, S4-04 | AN-03, AN-04; §§24.4, 25 | Filters/detail/status/audit, German display, disclaimer and ticket action. | `npm test -- --run src/features/anomalies` |
-| WP-S4-06 Maintenance domain, overdue and APIs | Planned | S1-02, S1-04 | MNT-01..07; §22.2; OQ-012 | Lifecycle, assignment, comments, due date, computed overdue, ownership and audit. | `.\mvnw.cmd "-Dtest=MaintenanceTicketLifecycleIT,TicketOverdueCalculationTest" verify` |
+| WP-S4-01 Threshold model and administration | Done | S1-05, S3-02 | S-12, ENE-05; OQ-003 | Threshold CRUD/scope, global delegation authorization and audit. | `.\mvnw.cmd "-Dtest=ThresholdAdministrationIT" verify` |
+| WP-S4-02 Deterministic anomaly engine | Done | S3-03..05, S4-01 | AN-01, AN-03; ENE-05, DTS-06 | Baselines, threshold fallback, z-score boundaries, severity, explanation and import trigger. | `.\mvnw.cmd "-Dtest=AnomalyDetectionServiceTest" test` |
+| WP-S4-03 Rerun identity and supersession | Done | S2-06, S4-02 | AN-02, AN-04; §23.4; OQ-007 | ADMIN rerun, fixed identity, no-op/changed/disappeared behavior and linked history. | `.\mvnw.cmd "-Dtest=AnalyticsRerunIT,AnomalySupersessionIT" verify` |
+| WP-S4-04 Recommendation templates and disclaimer | Done | S4-02 | AN-05; TEST-05; §23.5; CR-001 | Versioned deterministic templates and exact German disclaimer carrier/tests. | `.\mvnw.cmd "-Dtest=RecommendationServiceTest" test` |
+| WP-S4-05 Anomaly API and UI | Done | S4-03, S4-04 | AN-03, AN-04; §§24.4, 25 | Backend filters/detail/status/audit, rerun endpoint, German anomaly UI, recommendations and disclaimer are implemented. | Backend: `.\mvnw.cmd "-Dtest=AnalyticsRerunIT,AnomalySupersessionIT" verify`; UI: `npm test -- --run src/features/anomalies` |
+| WP-S4-06 Maintenance domain, overdue and APIs | In progress | S1-02, S1-04 | MNT-01..07; §22.2; OQ-012 | Lifecycle, assignment, comments, due date, computed overdue, ownership and audit. | `.\mvnw.cmd "-Dtest=MaintenanceTicketLifecycleIT,TicketOverdueCalculationTest" verify` |
 | WP-S4-07 Anomaly-to-ticket and recurring pattern | Planned | S4-03, S4-06 | MNT-02; AN-04; ACC-07 | Linked creation/status, machine history and recurring-ticket detection. | `.\mvnw.cmd "-Dtest=AnomalyToTicketIT,RecurringTicketPatternIT" verify` |
 | WP-S4-08 Maintenance UI | Planned | S0-06, S4-06, S4-07 | §25; ACC-07 | German assigned-first list/detail, transitions, notes, comments, overdue badge and history. | `npm test -- --run src/features/maintenance` |
 

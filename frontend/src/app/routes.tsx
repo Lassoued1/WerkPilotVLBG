@@ -38,6 +38,11 @@ const MasterDataPage = lazy(async () => {
   return { default: module.MasterDataPage };
 });
 
+const AnomaliesPage = lazy(async () => {
+  const module = await import("../features/anomalies/AnomaliesPage");
+  return { default: module.AnomaliesPage };
+});
+
 const PlaceholderPage = lazy(async () => {
   const module = await import("./pages/PlaceholderPage");
   return { default: module.PlaceholderPage };
@@ -72,6 +77,7 @@ export const routes = [
       { path: "production", element: pageElement(<ProductionPage />) },
       { path: "imports", element: pageElement(<ImportsPage />) },
       { path: "master-data", element: pageElement(<MasterDataPage />) },
+      { path: "anomalies", element: pageElement(<AnomaliesPage />) },
       {
         path: "maintenance",
         element: pageElement(

@@ -17,11 +17,13 @@ import com.werkpilot.masterdata.application.port.MasterDataPort;
 import com.werkpilot.masterdata.application.port.MasterDataRecord;
 import com.werkpilot.quality.application.port.ScrapRecordDraft;
 import com.werkpilot.quality.application.port.ScrapRecordPort;
+import com.werkpilot.shared.events.ImportAnalyticsChangedEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +46,7 @@ public class ScrapCsvImportService {
     private final ImportJobPort importJobPort;
     private final ImportJobService importJobService;
     private final AuditEventPort auditEventPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ScrapCsvImportService(
             StrictCsvParserService csvParser,
@@ -51,13 +54,15 @@ public class ScrapCsvImportService {
             ScrapRecordPort scrapRecordPort,
             ImportJobPort importJobPort,
             ImportJobService importJobService,
-            AuditEventPort auditEventPort) {
+            AuditEventPort auditEventPort,
+            ApplicationEventPublisher eventPublisher) {
         this.csvParser = csvParser;
         this.masterDataPort = masterDataPort;
         this.scrapRecordPort = scrapRecordPort;
         this.importJobPort = importJobPort;
         this.importJobService = importJobService;
         this.auditEventPort = auditEventPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -108,6 +113,7 @@ public class ScrapCsvImportService {
         importJobPort.markCommitted(job.id(), totalRows, records.size());
         auditEventPort.append(AuditEventType.CSV_IMPORT_COMMITTED, job.createdByUserId(), null,
                 "importJobId=%s; importType=%s; rows=%d".formatted(job.id(), job.importType(), records.size()));
+        eventPublisher.publishEvent(new ImportAnalyticsChangedEvent(job.id(), job.importType().name()));
     }
 
     private Optional<UUID> resolve(MasterDataKind kind, CsvRow row, String column, List<CsvValidationError> errors, ImportMasterDataLookup lookup) {

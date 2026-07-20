@@ -21,6 +21,7 @@ void i18n.use(initReactI18next).init({
           production: "Produktion",
           imports: "CSV-Import",
           masterData: "Stammdaten",
+          anomalies: "Anomalien",
           maintenance: "Instandhaltung",
           reports: "Berichte",
           administration: "Administration",

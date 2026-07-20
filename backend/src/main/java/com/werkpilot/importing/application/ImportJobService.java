@@ -9,6 +9,7 @@ import com.werkpilot.importing.domain.ImportJobStatus;
 import com.werkpilot.importing.domain.ImportType;
 import com.werkpilot.shared.error.ApiException;
 import com.werkpilot.shared.error.ErrorCode;
+import com.werkpilot.shared.events.ImportAnalyticsChangedEvent;
 import com.werkpilot.shared.security.AuthenticatedPrincipal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,11 +38,17 @@ public class ImportJobService {
     private final ImportJobPort importJobPort;
     private final AuditEventPort auditEventPort;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ImportJobService(ImportJobPort importJobPort, AuditEventPort auditEventPort, Clock clock) {
+    public ImportJobService(
+            ImportJobPort importJobPort,
+            AuditEventPort auditEventPort,
+            Clock clock,
+            ApplicationEventPublisher eventPublisher) {
         this.importJobPort = importJobPort;
         this.auditEventPort = auditEventPort;
         this.clock = clock;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -123,6 +131,8 @@ public class ImportJobService {
                     principal.userId(),
                     null,
                     "importJobId=%s; correctedByImportJobId=%s; importType=%s".formatted(target.id(), result.id(), target.importType()));
+            eventPublisher.publishEvent(new ImportAnalyticsChangedEvent(target.id(), target.importType().name()));
+            eventPublisher.publishEvent(new ImportAnalyticsChangedEvent(result.id(), result.importType().name()));
         }
         return job(result);
     }
@@ -141,6 +151,7 @@ public class ImportJobService {
                 principal.userId(),
                 null,
                 "importJobId=%s; importType=%s; reason=%s".formatted(target.id(), target.importType(), reason));
+        eventPublisher.publishEvent(new ImportAnalyticsChangedEvent(target.id(), target.importType().name()));
         return job(importJobPort.findById(target.id()).orElseThrow());
     }
 
@@ -317,5 +328,3 @@ public class ImportJobService {
             Instant createdAt) {
     }
 }
-
-
