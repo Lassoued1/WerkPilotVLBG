@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0016-01-maintenance-tickets
+      author: lassoued1
+      comment: Create maintenance tickets and append-only comments for WP-S4-06.
+      changes:
+        - createTable:
+            tableName: maintenance_ticket
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: title, type: varchar(200), constraints: { nullable: false } }
+              - column: { name: description, type: varchar(2000) }
+              - column: { name: status, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: priority, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: factory_id, type: uuid }
+              - column: { name: line_id, type: uuid }
+              - column: { name: machine_id, type: uuid }
+              - column: { name: anomaly_id, type: uuid }
+              - column: { name: assignee_user_id, type: uuid }
+              - column: { name: due_date, type: date }
+              - column: { name: resolution_note, type: varchar(2000) }
+              - column: { name: cancellation_reason, type: varchar(1000) }
+              - column: { name: created_by_user_id, type: uuid, constraints: { nullable: false, references: app_user(id), foreignKeyName: fk_ticket_created_by } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - createTable:
+            tableName: maintenance_ticket_comment
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: ticket_id, type: uuid, constraints: { nullable: false, references: maintenance_ticket(id), foreignKeyName: fk_ticket_comment_ticket } }
+              - column: { name: author_user_id, type: uuid, constraints: { nullable: false, references: app_user(id), foreignKeyName: fk_ticket_comment_author } }
+              - column: { name: message, type: varchar(2000), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - sql:
+            sql: >
+              alter table maintenance_ticket add constraint ck_ticket_status check (status in ('OPEN','IN_PROGRESS','RESOLVED','CANCELLED'))
+        - sql:
+            sql: >
+              alter table maintenance_ticket add constraint ck_ticket_priority check (priority in ('LOW','MEDIUM','HIGH','CRITICAL'))
+        - createIndex: { tableName: maintenance_ticket, indexName: ix_ticket_assignee_status, columns: [ { column: { name: assignee_user_id } }, { column: { name: status } } ] }
+      rollback:
+        - dropTable: { tableName: maintenance_ticket_comment }
+        - dropTable: { tableName: maintenance_ticket }

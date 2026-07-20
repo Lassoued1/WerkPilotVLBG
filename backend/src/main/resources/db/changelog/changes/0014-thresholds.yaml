@@ -1,0 +1,122 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0014-01-threshold-rules
+      author: lassoued1
+      comment: Create threshold administration schema for WP-S4-01.
+      changes:
+        - createTable:
+            tableName: threshold_rule
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: metric_key
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: scope_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: scope_id
+                  type: uuid
+              - column:
+                  name: min_value
+                  type: numeric(18,6)
+              - column:
+                  name: max_value
+                  type: numeric(18,6)
+              - column:
+                  name: severity
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_threshold_rule_created_by
+                    references: app_user(id)
+              - column:
+                  name: updated_by_user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_threshold_rule_updated_by
+                    references: app_user(id)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_metric_key
+              check (metric_key in ('ENERGY_KWH','ENERGY_PER_UNIT','OUTPUT_PER_HOUR','AVAILABILITY','DOWNTIME_MINUTES','SCRAP_RATE'))
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_scope_type
+              check (scope_type in ('GLOBAL','FACTORY','LINE','MACHINE','PRODUCT','SHIFT'))
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_severity
+              check (severity in ('WARNING','CRITICAL'))
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_scope_id
+              check ((scope_type = 'GLOBAL' and scope_id is null) or (scope_type <> 'GLOBAL' and scope_id is not null))
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_bounds_present
+              check (min_value is not null or max_value is not null)
+        - sql:
+            sql: >
+              alter table threshold_rule
+              add constraint ck_threshold_rule_bounds_order
+              check (min_value is null or max_value is null or min_value <= max_value)
+        - createIndex:
+            tableName: threshold_rule
+            indexName: ix_threshold_rule_lookup
+            columns:
+              - column:
+                  name: metric_key
+              - column:
+                  name: scope_type
+              - column:
+                  name: scope_id
+              - column:
+                  name: active
+        - createIndex:
+            tableName: threshold_rule
+            indexName: ix_threshold_rule_updated_at
+            columns:
+              - column:
+                  name: updated_at
+      rollback:
+        - dropTable:
+            tableName: threshold_rule

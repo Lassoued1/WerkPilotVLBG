@@ -1,0 +1,250 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0015-01-anomalies-recommendations
+      author: lassoued1
+      comment: Create deterministic anomaly and recommendation schema for WP-S4-02..S4-05.
+      changes:
+        - createTable:
+            tableName: anomaly
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: identity_key
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: detector_version
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metric_key
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: anomaly_type
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: severity
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: detection_method
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: factory_id
+                  type: uuid
+              - column:
+                  name: line_id
+                  type: uuid
+              - column:
+                  name: machine_id
+                  type: uuid
+              - column:
+                  name: product_id
+                  type: uuid
+              - column:
+                  name: shift_id
+                  type: uuid
+              - column:
+                  name: period_start
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: period_end
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: observed_value
+                  type: numeric(18,6)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseline_average
+                  type: numeric(18,6)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseline_stddev
+                  type: numeric(18,6)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseline_count
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: baseline_quality
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: z_score
+                  type: numeric(18,6)
+              - column:
+                  name: threshold_rule_id
+                  type: uuid
+              - column:
+                  name: explanation
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fingerprint
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: previous_anomaly_id
+                  type: uuid
+              - column:
+                  name: superseded_by_anomaly_id
+                  type: uuid
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: anomaly_recommendation
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: anomaly_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_code
+                  type: varchar(80)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template_version
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message_de
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: disclaimer_de
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: anomaly
+            baseColumnNames: threshold_rule_id
+            referencedTableName: threshold_rule
+            referencedColumnNames: id
+            constraintName: fk_anomaly_threshold_rule
+        - addForeignKeyConstraint:
+            baseTableName: anomaly
+            baseColumnNames: previous_anomaly_id
+            referencedTableName: anomaly
+            referencedColumnNames: id
+            constraintName: fk_anomaly_previous
+        - addForeignKeyConstraint:
+            baseTableName: anomaly
+            baseColumnNames: superseded_by_anomaly_id
+            referencedTableName: anomaly
+            referencedColumnNames: id
+            constraintName: fk_anomaly_superseded_by
+        - addForeignKeyConstraint:
+            baseTableName: anomaly_recommendation
+            baseColumnNames: anomaly_id
+            referencedTableName: anomaly
+            referencedColumnNames: id
+            constraintName: fk_anomaly_recommendation_anomaly
+            onDelete: CASCADE
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_status
+              check (status in ('NEW','ACKNOWLEDGED','IN_PROGRESS','RESOLVED','DISMISSED','SUPERSEDED'))
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_severity
+              check (severity in ('WARNING','CRITICAL'))
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_baseline_quality
+              check (baseline_quality in ('LOW','MEDIUM','HIGH'))
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_detection_method
+              check (detection_method in ('Z_SCORE','THRESHOLD','Z_SCORE_AND_THRESHOLD'))
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_period_order
+              check (period_end > period_start)
+        - createIndex:
+            tableName: anomaly
+            indexName: ix_anomaly_active_filters
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: period_start
+              - column:
+                  name: anomaly_type
+              - column:
+                  name: severity
+        - createIndex:
+            tableName: anomaly
+            indexName: ix_anomaly_identity_active
+            columns:
+              - column:
+                  name: identity_key
+              - column:
+                  name: status
+        - createIndex:
+            tableName: anomaly_recommendation
+            indexName: ix_anomaly_recommendation_anomaly_id
+            columns:
+              - column:
+                  name: anomaly_id
+      rollback:
+        - dropTable:
+            tableName: anomaly_recommendation
+        - dropTable:
+            tableName: anomaly
