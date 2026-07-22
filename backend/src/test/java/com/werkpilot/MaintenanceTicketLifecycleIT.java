@@ -116,23 +116,23 @@ class MaintenanceTicketLifecycleIT extends PostgreSqlTestContainerSupport {
 
         String openTicketId = createTicket(adminToken, null);
         changeStatus(adminToken, openTicketId, "RESOLVED", "Cannot skip in-progress.")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("BUSINESS_RULE_VIOLATION"));
 
         String resolvedTicketId = createTicket(adminToken, null);
         changeStatus(adminToken, resolvedTicketId, "IN_PROGRESS", null).andExpect(status().isOk());
         changeStatus(adminToken, resolvedTicketId, "RESOLVED", "Done.").andExpect(status().isOk());
 
-        changeStatus(adminToken, resolvedTicketId, "OPEN", null).andExpect(status().isBadRequest());
-        changeStatus(adminToken, resolvedTicketId, "IN_PROGRESS", null).andExpect(status().isBadRequest());
-        changeStatus(adminToken, resolvedTicketId, "CANCELLED", "No longer needed.").andExpect(status().isBadRequest());
+        changeStatus(adminToken, resolvedTicketId, "OPEN", null).andExpect(status().isConflict());
+        changeStatus(adminToken, resolvedTicketId, "IN_PROGRESS", null).andExpect(status().isConflict());
+        changeStatus(adminToken, resolvedTicketId, "CANCELLED", "No longer needed.").andExpect(status().isConflict());
 
         String cancelledTicketId = createTicket(adminToken, null);
         changeStatus(adminToken, cancelledTicketId, "CANCELLED", "Duplicate.").andExpect(status().isOk());
 
-        changeStatus(adminToken, cancelledTicketId, "OPEN", null).andExpect(status().isBadRequest());
-        changeStatus(adminToken, cancelledTicketId, "IN_PROGRESS", null).andExpect(status().isBadRequest());
-        changeStatus(adminToken, cancelledTicketId, "RESOLVED", "Done.").andExpect(status().isBadRequest());
+        changeStatus(adminToken, cancelledTicketId, "OPEN", null).andExpect(status().isConflict());
+        changeStatus(adminToken, cancelledTicketId, "IN_PROGRESS", null).andExpect(status().isConflict());
+        changeStatus(adminToken, cancelledTicketId, "RESOLVED", "Done.").andExpect(status().isConflict());
 
         assertThat(ticketStatusChangedAuditCount(openTicketId)).isZero();
         assertThat(ticketStatusChangedAuditCount(resolvedTicketId)).isEqualTo(2);

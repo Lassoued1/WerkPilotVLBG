@@ -1,7 +1,7 @@
 import { apiRequest } from "../../shared/api/http";
 import { kpiQueryString, type KpiFilters, type PageResponse } from "../dashboard/api";
 
-export type AnomalyStatus = "NEW" | "ACKNOWLEDGED" | "IN_PROGRESS" | "RESOLVED" | "DISMISSED" | "SUPERSEDED";
+export type AnomalyStatus = "NEW" | "ACKNOWLEDGED" | "LINKED_TO_TICKET" | "DISMISSED" | "SUPERSEDED";
 
 export type Anomaly = {
   id: string;
@@ -32,6 +32,7 @@ export type Anomaly = {
 };
 
 export type Recommendation = { id: string; templateCode: string; templateVersion: string; messageDe: string; disclaimerDe: string };
+export type LinkedTicket = { id: string; title: string; status: string; priority: string };
 export type AnomalyDetail = { anomaly: Anomaly; recommendations: Recommendation[] };
 export type AnomalyFilters = KpiFilters & { anomalyType?: string; severity?: string; anomalyStatus?: string; includeSuperseded?: boolean };
 
@@ -56,4 +57,12 @@ export function rerunAnomalies(filters: KpiFilters) {
     method: "POST",
     body: JSON.stringify(filters),
   });
+}
+
+export function createTicketFromAnomaly(id: string, ticket: { title: string; issueCategory?: string; priority?: string; dueDate?: string }) {
+  return apiRequest<LinkedTicket>(`/anomalies/${id}/tickets`, { method: "POST", body: JSON.stringify(ticket) });
+}
+
+export function fetchLinkedTicket(id: string) {
+  return apiRequest<LinkedTicket>(`/anomalies/${id}/ticket`);
 }

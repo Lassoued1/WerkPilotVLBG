@@ -84,8 +84,8 @@ public class AnomalyQueryService {
     @Transactional
     public AnomalyRecord updateStatus(UUID id, String requestedStatus, AuthenticatedPrincipal actor) {
         AnomalyStatus status = parseStatus(requestedStatus);
-        if (status == AnomalyStatus.SUPERSEDED) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, "SUPERSEDED is system-assigned only.");
+        if (status == AnomalyStatus.SUPERSEDED || status == AnomalyStatus.LINKED_TO_TICKET) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, "This anomaly status is system-assigned only.");
         }
         if (!actor.roles().contains("ADMIN")
                 && !actor.roles().contains("PRODUCTION_MANAGER")

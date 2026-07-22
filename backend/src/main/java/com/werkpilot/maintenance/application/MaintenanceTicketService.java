@@ -12,22 +12,238 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service public class MaintenanceTicketService {
-  private static final ZoneId VIENNA = ZoneId.of("Europe/Vienna"); private final MaintenanceTicketPort port; private final AuditEventPort audit; private final Clock clock;
-  @Autowired
-  public MaintenanceTicketService(MaintenanceTicketPort port, AuditEventPort audit) { this(port,audit,Clock.systemUTC()); }
-  MaintenanceTicketService(MaintenanceTicketPort port, AuditEventPort audit, Clock clock) { this.port=port;this.audit=audit;this.clock=clock; }
-  public List<MaintenanceTicket> list(){return port.list();} public MaintenanceTicket get(UUID id){return port.findById(id).orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,ErrorCode.RESOURCE_NOT_FOUND,"Ticket was not found."));} public List<MaintenanceTicketComment> comments(UUID id){get(id);return port.comments(id);}
-  @Transactional public MaintenanceTicket create(AuthenticatedPrincipal actor, TicketCommand c){ requireManager(actor); if(c.title()==null||c.title().isBlank()) throw invalid("title is required"); MaintenanceTicket t=new MaintenanceTicket(UUID.randomUUID(),c.title().trim(),c.description(),TicketStatus.OPEN,priority(c.priority()),c.factoryId(),c.lineId(),c.machineId(),c.anomalyId(),c.assigneeUserId(),c.dueDate(),null,null,actor.userId(),null,null); return port.create(t); }
-  @Transactional public MaintenanceTicket changeStatus(AuthenticatedPrincipal actor, UUID id, String requested, String note){ MaintenanceTicket t=get(id); authorizeActor(actor,t); TicketStatus next=status(requested); if(!allowed(t.status(),next)) throw invalid("Unsupported ticket transition"); if(next==TicketStatus.RESOLVED&&(note==null||note.isBlank())) throw invalid("resolution note is required"); if(next==TicketStatus.CANCELLED&&(note==null||note.isBlank())) throw invalid("cancellation reason is required"); MaintenanceTicket updated=new MaintenanceTicket(t.id(),t.title(),t.description(),next,t.priority(),t.factoryId(),t.lineId(),t.machineId(),t.anomalyId(),t.assigneeUserId(),t.dueDate(),next==TicketStatus.RESOLVED?note:t.resolutionNote(),next==TicketStatus.CANCELLED?note:t.cancellationReason(),t.createdByUserId(),t.createdAt(),t.updatedAt()); updated=port.update(updated); audit.append(AuditEventType.TICKET_STATUS_CHANGED,actor.userId(),null,"ticketId="+id+";oldStatus="+t.status()+";newStatus="+next); return updated; }
-  @Transactional public MaintenanceTicketComment addComment(AuthenticatedPrincipal actor,UUID id,String message){MaintenanceTicket t=get(id);authorizeActor(actor,t);if(message==null||message.isBlank())throw invalid("message is required");return port.addComment(new MaintenanceTicketComment(UUID.randomUUID(),id,actor.userId(),message.trim(),null));}
-  public boolean overdue(MaintenanceTicket t){return t.dueDate()!=null&&t.dueDate().isBefore(LocalDate.now(clock.withZone(VIENNA)))&&(t.status()==TicketStatus.OPEN||t.status()==TicketStatus.IN_PROGRESS);}
-  private static boolean allowed(TicketStatus from,TicketStatus to){return (from==TicketStatus.OPEN&&(to==TicketStatus.IN_PROGRESS||to==TicketStatus.CANCELLED))||(from==TicketStatus.IN_PROGRESS&&(to==TicketStatus.RESOLVED||to==TicketStatus.CANCELLED));} private static TicketStatus status(String s){try{return TicketStatus.valueOf(s.trim().toUpperCase(Locale.ROOT));}catch(Exception e){throw invalid("Unsupported ticket status");}} private static TicketPriority priority(String s){try{return s==null?TicketPriority.MEDIUM:TicketPriority.valueOf(s.trim().toUpperCase(Locale.ROOT));}catch(Exception e){throw invalid("Unsupported priority");}} private static void requireManager(AuthenticatedPrincipal a){if(!a.roles().contains("ADMIN")&&!a.roles().contains("PRODUCTION_MANAGER")&&!a.roles().contains("ENERGY_MANAGER"))throw new ApiException(HttpStatus.FORBIDDEN,ErrorCode.ACCESS_DENIED,"Only managers can create tickets.");} private static void authorizeActor(AuthenticatedPrincipal a,MaintenanceTicket t){if(a.roles().contains("ADMIN")||a.roles().contains("PRODUCTION_MANAGER")||a.roles().contains("ENERGY_MANAGER")||a.userId().equals(t.assigneeUserId()))return;throw new ApiException(HttpStatus.FORBIDDEN,ErrorCode.ACCESS_DENIED,"Ticket access denied.");} private static ApiException invalid(String m){return new ApiException(HttpStatus.BAD_REQUEST,ErrorCode.VALIDATION_FAILED,m);}
-  public record TicketCommand(String title,String description,String priority,UUID factoryId,UUID lineId,UUID machineId,UUID anomalyId,UUID assigneeUserId,LocalDate dueDate){}
+@Service
+public class MaintenanceTicketService {
+
+    private static final ZoneId VIENNA = ZoneId.of("Europe/Vienna");
+
+    private final MaintenanceTicketPort port;
+    private final AuditEventPort audit;
+    private final Clock clock;
+    private final RecurringTicketPatternService recurringTicketPatternService;
+
+    @Autowired
+    public MaintenanceTicketService(
+            MaintenanceTicketPort port,
+            AuditEventPort audit,
+            RecurringTicketPatternService recurringTicketPatternService) {
+        this(port, audit, Clock.systemUTC(), recurringTicketPatternService);
+    }
+
+    MaintenanceTicketService(
+            MaintenanceTicketPort port,
+            AuditEventPort audit,
+            Clock clock,
+            RecurringTicketPatternService recurringTicketPatternService) {
+        this.port = port;
+        this.audit = audit;
+        this.clock = clock;
+        this.recurringTicketPatternService = recurringTicketPatternService;
+    }
+
+    public List<MaintenanceTicket> list(
+            AuthenticatedPrincipal actor,
+            String requestedStatus,
+            String requestedPriority,
+            UUID assigneeUserId,
+            UUID machineId) {
+        return port.list(
+                new TicketSearchCriteria(status(requestedStatus), priority(requestedPriority), assigneeUserId, machineId),
+                actor.userId());
+    }
+
+    public MaintenanceTicket get(UUID id) {
+        return port.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, "Ticket was not found."));
+    }
+
+    public Optional<MaintenanceTicket> findByAnomalyId(UUID anomalyId) {
+        return port.findByAnomalyId(anomalyId);
+    }
+
+    public List<MaintenanceTicketComment> comments(UUID id) {
+        get(id);
+        return port.comments(id);
+    }
+
+    @Transactional
+    public MaintenanceTicket create(AuthenticatedPrincipal actor, TicketCommand command) {
+        requireManager(actor);
+        if (command.title() == null || command.title().isBlank()) {
+            throw invalid("title is required");
+        }
+        MaintenanceTicket created = port.create(new MaintenanceTicket(
+                UUID.randomUUID(),
+                command.title().trim(),
+                trimToNull(command.description()),
+                trimToNull(command.issueCategory()),
+                TicketStatus.OPEN,
+                priorityOrDefault(command.priority()),
+                command.factoryId(),
+                command.lineId(),
+                command.machineId(),
+                command.anomalyId(),
+                command.assigneeUserId(),
+                command.dueDate(),
+                null,
+                null,
+                actor.userId(),
+                null,
+                null));
+        recurringTicketPatternService.detectIfRecurring(created);
+        return created;
+    }
+
+    @Transactional
+    public MaintenanceTicket changeStatus(AuthenticatedPrincipal actor, UUID id, String requestedStatus, String note) {
+        MaintenanceTicket ticket = get(id);
+        authorizeActor(actor, ticket);
+        TicketStatus next = requiredStatus(requestedStatus);
+        if (!allowed(ticket.status(), next)) {
+            throw businessRule("Unsupported ticket transition");
+        }
+        if (next == TicketStatus.RESOLVED && isBlank(note)) {
+            throw invalid("resolution note is required");
+        }
+        if (next == TicketStatus.CANCELLED && isBlank(note)) {
+            throw invalid("cancellation reason is required");
+        }
+        MaintenanceTicket updated = port.update(new MaintenanceTicket(
+                ticket.id(),
+                ticket.title(),
+                ticket.description(),
+                ticket.issueCategory(),
+                next,
+                ticket.priority(),
+                ticket.factoryId(),
+                ticket.lineId(),
+                ticket.machineId(),
+                ticket.anomalyId(),
+                ticket.assigneeUserId(),
+                ticket.dueDate(),
+                next == TicketStatus.RESOLVED ? note.trim() : ticket.resolutionNote(),
+                next == TicketStatus.CANCELLED ? note.trim() : ticket.cancellationReason(),
+                ticket.createdByUserId(),
+                ticket.createdAt(),
+                ticket.updatedAt()));
+        audit.append(
+                AuditEventType.TICKET_STATUS_CHANGED,
+                actor.userId(),
+                null,
+                "ticketId=" + id + ";oldStatus=" + ticket.status() + ";newStatus=" + next);
+        return updated;
+    }
+
+    @Transactional
+    public MaintenanceTicketComment addComment(AuthenticatedPrincipal actor, UUID id, String message) {
+        MaintenanceTicket ticket = get(id);
+        authorizeActor(actor, ticket);
+        if (isBlank(message)) {
+            throw invalid("message is required");
+        }
+        MaintenanceTicketComment comment = port.addComment(new MaintenanceTicketComment(
+                UUID.randomUUID(), id, actor.userId(), message.trim(), null));
+        audit.append(AuditEventType.TICKET_COMMENT_ADDED, actor.userId(), null, "ticketId=" + id + ";commentId=" + comment.id());
+        return comment;
+    }
+
+    public boolean overdue(MaintenanceTicket ticket) {
+        return ticket.dueDate() != null
+                && ticket.dueDate().isBefore(LocalDate.now(clock.withZone(VIENNA)))
+                && (ticket.status() == TicketStatus.OPEN || ticket.status() == TicketStatus.IN_PROGRESS);
+    }
+
+    private static boolean allowed(TicketStatus from, TicketStatus to) {
+        return (from == TicketStatus.OPEN && (to == TicketStatus.IN_PROGRESS || to == TicketStatus.CANCELLED))
+                || (from == TicketStatus.IN_PROGRESS && (to == TicketStatus.RESOLVED || to == TicketStatus.CANCELLED));
+    }
+
+    private static TicketStatus requiredStatus(String value) {
+        TicketStatus status = status(value);
+        if (status == null) {
+            throw invalid("ticket status is required");
+        }
+        return status;
+    }
+
+    private static TicketStatus status(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return TicketStatus.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw invalid("Unsupported ticket status");
+        }
+    }
+
+    private static TicketPriority priority(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return TicketPriority.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw invalid("Unsupported priority");
+        }
+    }
+
+    private static TicketPriority priorityOrDefault(String value) {
+        TicketPriority priority = priority(value);
+        return priority == null ? TicketPriority.MEDIUM : priority;
+    }
+
+    private static void requireManager(AuthenticatedPrincipal actor) {
+        if (!actor.roles().contains("ADMIN")
+                && !actor.roles().contains("PRODUCTION_MANAGER")
+                && !actor.roles().contains("ENERGY_MANAGER")) {
+            throw new ApiException(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, "Only managers can create tickets.");
+        }
+    }
+
+    private static void authorizeActor(AuthenticatedPrincipal actor, MaintenanceTicket ticket) {
+        if (actor.roles().contains("ADMIN")
+                || actor.roles().contains("PRODUCTION_MANAGER")
+                || actor.roles().contains("ENERGY_MANAGER")
+                || actor.userId().equals(ticket.assigneeUserId())) {
+            return;
+        }
+        throw new ApiException(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED, "Ticket access denied.");
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static String trimToNull(String value) {
+        return isBlank(value) ? null : value.trim();
+    }
+
+    private static ApiException invalid(String message) {
+        return new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, message);
+    }
+
+    private static ApiException businessRule(String message) {
+        return new ApiException(HttpStatus.CONFLICT, ErrorCode.BUSINESS_RULE_VIOLATION, message);
+    }
+
+    public record TicketCommand(
+            String title,
+            String description,
+            String issueCategory,
+            String priority,
+            UUID factoryId,
+            UUID lineId,
+            UUID machineId,
+            UUID anomalyId,
+            UUID assigneeUserId,
+            LocalDate dueDate) {
+    }
 }

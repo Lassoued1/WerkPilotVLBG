@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0017-01-maintenance-anomaly-linkage
+      author: Lassoued1
+      comment: Add issue categories, anomaly ticket linkage, and contract-correct anomaly statuses for Sprint 4.
+      changes:
+        - addColumn:
+            tableName: maintenance_ticket
+            columns:
+              - column:
+                  name: issue_category
+                  type: varchar(100)
+        - addForeignKeyConstraint:
+            baseTableName: maintenance_ticket
+            baseColumnNames: anomaly_id
+            referencedTableName: anomaly
+            referencedColumnNames: id
+            constraintName: fk_ticket_anomaly
+        - sql:
+            sql: >
+              create unique index ux_ticket_anomaly_id on maintenance_ticket (anomaly_id)
+              where anomaly_id is not null
+        - sql:
+            sql: >
+              alter table anomaly drop constraint ck_anomaly_status
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_status
+              check (status in ('NEW','ACKNOWLEDGED','LINKED_TO_TICKET','DISMISSED','SUPERSEDED'))
+        - createIndex:
+            tableName: maintenance_ticket
+            indexName: ix_ticket_machine_category_created
+            columns:
+              - column:
+                  name: machine_id
+              - column:
+                  name: issue_category
+              - column:
+                  name: created_at
+      rollback:
+        - sql:
+            sql: alter table anomaly drop constraint ck_anomaly_status
+        - sql:
+            sql: >
+              alter table anomaly add constraint ck_anomaly_status
+              check (status in ('NEW','ACKNOWLEDGED','IN_PROGRESS','RESOLVED','DISMISSED','SUPERSEDED'))
+        - dropIndex:
+            tableName: maintenance_ticket
+            indexName: ix_ticket_machine_category_created
+        - sql:
+            sql: drop index ux_ticket_anomaly_id
+        - dropForeignKeyConstraint:
+            baseTableName: maintenance_ticket
+            constraintName: fk_ticket_anomaly
+        - dropColumn:
+            tableName: maintenance_ticket
+            columnName: issue_category

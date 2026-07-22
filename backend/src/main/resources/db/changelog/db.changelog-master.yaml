@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/changes/0015-anomalies-recommendations.yaml
   - include:
       file: db/changelog/changes/0016-maintenance-tickets.yaml
+  - include:
+      file: db/changelog/changes/0017-maintenance-anomaly-linkage.yaml

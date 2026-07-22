@@ -7,6 +7,7 @@ import com.werkpilot.audit.application.port.AuditEventPort;
 import com.werkpilot.maintenance.application.MaintenanceTicket;
 import com.werkpilot.maintenance.application.MaintenanceTicketPort;
 import com.werkpilot.maintenance.application.MaintenanceTicketService;
+import com.werkpilot.maintenance.application.RecurringTicketPatternService;
 import com.werkpilot.maintenance.domain.TicketPriority;
 import com.werkpilot.maintenance.domain.TicketStatus;
 import java.lang.reflect.Constructor;
@@ -78,9 +79,14 @@ class TicketOverdueCalculationTest {
             Constructor<MaintenanceTicketService> constructor = MaintenanceTicketService.class.getDeclaredConstructor(
                     MaintenanceTicketPort.class,
                     AuditEventPort.class,
-                    Clock.class);
+                    Clock.class,
+                    RecurringTicketPatternService.class);
             constructor.setAccessible(true);
-            return constructor.newInstance(mock(MaintenanceTicketPort.class), mock(AuditEventPort.class), clock);
+            return constructor.newInstance(
+                    mock(MaintenanceTicketPort.class),
+                    mock(AuditEventPort.class),
+                    clock,
+                    mock(RecurringTicketPatternService.class));
         } catch (ReflectiveOperationException ex) {
             throw new IllegalStateException("Could not construct MaintenanceTicketService with fixed Clock.", ex);
         }
@@ -92,6 +98,7 @@ class TicketOverdueCalculationTest {
                 UUID.randomUUID(),
                 "Ticket",
                 "Description",
+                null,
                 status,
                 TicketPriority.MEDIUM,
                 null,

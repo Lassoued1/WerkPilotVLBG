@@ -62,6 +62,7 @@ public class RecommendationService {
             case PRODUCTION_DROP -> "PRODUCTION_OUTPUT_CHECK";
             case DOWNTIME_SPIKE -> "DOWNTIME_ROOT_CAUSE_CHECK";
             case SCRAP_SPIKE -> "QUALITY_SCRAP_CHECK";
+            case RECURRING_TICKET_PATTERN -> "RECURRING_TICKET_ROOT_CAUSE";
         };
     }
 
@@ -75,6 +76,8 @@ public class RecommendationService {
                     "Stillstandsursache pruefen: Pareto-Grund, Wartungsbedarf und Wiederholungen an der Maschine bewerten.";
             case SCRAP_SPIKE ->
                     "Ausschuss pruefen: Kategorie, Produktcharge und Prozessparameter im betroffenen Zeitraum nachvollziehen.";
+            case RECURRING_TICKET_PATTERN ->
+                    "Grundursachenanalyse einleiten: Gleichartige Wartungsfaelle an derselben Maschine sind innerhalb von 30 Tagen wiederholt aufgetreten.";
         };
     }
 }

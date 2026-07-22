@@ -3,8 +3,7 @@ package com.werkpilot.analytics.domain;
 public enum AnomalyStatus {
     NEW,
     ACKNOWLEDGED,
-    IN_PROGRESS,
-    RESOLVED,
+    LINKED_TO_TICKET,
     DISMISSED,
     SUPERSEDED
 }

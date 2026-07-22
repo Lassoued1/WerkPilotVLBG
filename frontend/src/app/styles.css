@@ -437,6 +437,33 @@ select {
   padding: 8px 10px;
 }
 
+.overdue-badge {
+  display: inline-block;
+  margin-left: 6px;
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: #991b1b;
+  background: #fee2e2;
+  font-size: 0.8rem;
+}
+
+.comment-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment-list li {
+  display: grid;
+  gap: 3px;
+  border-left: 3px solid #bfdbfe;
+  padding: 8px 10px;
+  color: #243044;
+  background: #f8fafc;
+}
+
 button:disabled,
 input:disabled,
 select:disabled {

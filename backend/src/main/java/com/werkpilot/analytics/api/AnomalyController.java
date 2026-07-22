@@ -30,8 +30,9 @@ class AnomalyController {
 
     private final AnomalyQueryService anomalyQueryService;
     private final AnomalyRerunService anomalyRerunService;
-
-    AnomalyController(AnomalyQueryService anomalyQueryService, AnomalyRerunService anomalyRerunService) {
+    AnomalyController(
+            AnomalyQueryService anomalyQueryService,
+            AnomalyRerunService anomalyRerunService) {
         this.anomalyQueryService = anomalyQueryService;
         this.anomalyRerunService = anomalyRerunService;
     }
