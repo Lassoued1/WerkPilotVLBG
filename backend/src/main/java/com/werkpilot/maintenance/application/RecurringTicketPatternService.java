@@ -10,10 +10,15 @@ import com.werkpilot.analytics.domain.DetectionMethod;
 import com.werkpilot.analytics.domain.ThresholdMetricKey;
 import com.werkpilot.analytics.domain.ThresholdSeverity;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,6 +33,7 @@ public class RecurringTicketPatternService {
     private final RecommendationPort recommendationPort;
     private final Clock clock;
 
+    @Autowired
     RecurringTicketPatternService(
             MaintenanceTicketPort ticketPort,
             AnomalyPort anomalyPort,
@@ -89,8 +95,20 @@ public class RecurringTicketPatternService {
                 null,
                 "Wiederkehrendes Ticketmuster: %d Tickets der Kategorie %s an derselben Maschine innerhalb von 30 Tagen."
                         .formatted(relatedTickets.size(), ticket.issueCategory()),
-                "recurring-ticket|%s|%s|%d".formatted(ticket.machineId(), ticket.issueCategory(), relatedTickets.size()));
+                fingerprint(identityKey, relatedTickets.size()));
         var anomaly = anomalyPort.create(candidate, null);
         recommendationPort.replaceForAnomaly(anomaly.id(), recommendationService.recommendationsFor(anomaly.id(), candidate));
+    }
+
+    private static String fingerprint(String identityKey, int relatedTicketCount) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(identityKey.getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) '|');
+            digest.update(Integer.toString(relatedTicketCount).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is required by the JVM.", exception);
+        }
     }
 }

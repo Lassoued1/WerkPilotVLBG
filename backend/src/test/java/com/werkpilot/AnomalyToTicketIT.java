@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import com.werkpilot.support.PostgreSqlTestContainerSupport;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,8 +110,8 @@ class AnomalyToTicketIT extends PostgreSqlTestContainerSupport {
                 id,
                 "anomaly-to-ticket-" + id,
                 "test-v1",
-                Instant.parse("2026-07-20T08:00:00Z"),
-                Instant.parse("2026-07-20T09:00:00Z"),
+                Timestamp.from(Instant.parse("2026-07-20T08:00:00Z")),
+                Timestamp.from(Instant.parse("2026-07-20T09:00:00Z")),
                 new BigDecimal("200.000"),
                 new BigDecimal("100.000"),
                 new BigDecimal("0.000"),
